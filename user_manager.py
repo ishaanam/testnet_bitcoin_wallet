@@ -11,7 +11,10 @@ def make_user():
 	no_user = True
 	while no_user:
 		username = input("username: ")
-		current_users = get_all_users()
+		try:
+			current_users = get_all_users()
+		except FileNotFoundError:
+			current_users = []
 		if username in current_users:
 			print("This username is already taken")
 		else:
@@ -26,12 +29,16 @@ def make_user():
 		else:
 			print("The passwords don't match")
 	pass_hash = save_pass(password)
-
-	f = open("users.csv", "a", newline="")
 	tupl = (username, pass_hash)
-	writer = csv.writer(f)
-	writer.writerow(tupl)
-	f.close()
+	try: 
+		with open("users.csv", "a", newline="") as user_file:
+			writer = csv.writer(user_file)
+			writer.writerow(tupl)
+	except FileNotFoundError:
+		with open("users.csv", "w", newline="") as user_file:
+			writer = csv.writer(user_file)
+			writer.writerow(tupl)
+
 
 	with open(f'{username}.csv', 'w', newline="") as new_file:
 		writer = csv.writer(new_file)

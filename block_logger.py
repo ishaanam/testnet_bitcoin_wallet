@@ -17,8 +17,6 @@ from tx import Tx, TxIn, TxOut
 import csv
 import time
 
-import logging
-from threading import Thread
 import time
 import signal
 
@@ -51,10 +49,18 @@ def get_latest_block_hash():
     return last_block.hex()
 
 def read_log():
-    with open('block_log.csv', 'r') as log_file:
-        r = csv.reader(log_file)
-        lines = list(r)
-        return lines[-1][0]
+    try:
+        with open('block_log.csv', 'r') as log_file:
+            r = csv.reader(log_file)
+            lines = list(r)
+            return lines[-1][0]
+    except FileNotFoundError:
+        start_block = "0000000062043fb2e5091e43476e485ddc5d726339fd12bb010d5aeaf2be8206"
+        with open('block_log.csv', 'w', newline="") as log_file:
+            w = csv.writer(log_file)
+            w.writerow((start_block, 0))
+            print("made file")
+            return start_block
 
 def find_user(addr):
     with open('users.csv', 'r') as users_file:
@@ -95,9 +101,6 @@ def get_all_addr():
 def handler(signum, frame):
     raise Exception("timed out")
 
-def is_unspent(tx_out):
-    pass
-
 
 def input_parser(current_addr, node):
     while True:
@@ -130,6 +133,7 @@ def block_syncer():
     while True:
         now_hash = get_latest_block_hash()
         then_hash = read_log()
+        print(then_hash)
         current_addr = get_all_addr()
         node = SimpleNode('testnet.programmingbitcoin.com', testnet=True, logging=False)
         bf = BloomFilter(size=30, function_count=5, tweak=1729)
