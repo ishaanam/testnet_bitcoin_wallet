@@ -4,12 +4,12 @@ import hashlib
 from logging import getLogger
 from unittest import TestCase
 
-from ecc import (
+from .ecc import (
     S256Point,
     Signature,
 )
 
-from helper import (
+from .helper import (
     hash160,
     hash256,
 )

@@ -6,8 +6,8 @@ from io import BytesIO
 from random import randint
 from unittest import TestCase
 
-from block import Block
-from helper import (
+from .block import Block
+from .helper import (
     hash256,
     encode_varint,
     int_to_little_endian,

@@ -2,7 +2,7 @@
 from io import BytesIO
 from unittest import TestCase
 
-from helper import (
+from .helper import (
     bits_to_target,
     hash256,
     int_to_little_endian,

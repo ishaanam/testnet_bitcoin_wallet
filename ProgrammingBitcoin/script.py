@@ -3,7 +3,7 @@ from io import BytesIO
 from logging import getLogger
 from unittest import TestCase
 
-from helper import (
+from .helper import (
     encode_varint,
     h160_to_p2pkh_address,
     h160_to_p2sh_address,
@@ -11,7 +11,7 @@ from helper import (
     little_endian_to_int,
     read_varint,
 )
-from op import (
+from .op import (
     op_equal,
     op_hash160,
     op_verify,

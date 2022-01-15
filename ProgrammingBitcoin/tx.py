@@ -5,8 +5,8 @@ from unittest import TestCase
 import json
 import requests
 
-from ecc import PrivateKey
-from helper import (
+from .ecc import PrivateKey
+from .helper import (
     encode_varint,
     hash256,
     int_to_little_endian,
@@ -14,7 +14,7 @@ from helper import (
     read_varint,
     SIGHASH_ALL,
 )
-from script import Script
+from .script import Script
 
 
 class TxFetcher:

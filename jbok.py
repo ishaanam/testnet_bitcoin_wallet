@@ -1,7 +1,7 @@
 from secrets import token_hex
 import csv
-from helper import little_endian_to_int, hash256
-from ecc import PrivateKey
+from ProgrammingBitcoin.helper import little_endian_to_int, hash256
+from ProgrammingBitcoin.ecc import PrivateKey
 
 def get_pkobj(seed):
 	seed = str.encode(seed)
