@@ -1,0 +1,1 @@
+HOST = "testnet.programmingbitcoin.com"  

@@ -14,22 +14,33 @@ from ProgrammingBitcoin.network import (
 )
 from ProgrammingBitcoin.script import p2pkh_script, Script
 from ProgrammingBitcoin.tx import Tx, TxIn, TxOut
-import csv
+from network_settings import HOST
 
+import csv
 import time
 import signal
 
+def read_log(block_number):
+    start_block = "0000000062043fb2e5091e43476e485ddc5d726339fd12bb010d5aeaf2be8206"
+    try:
+        with open('block_log.csv', 'r') as log_file:
+            r = csv.reader(log_file)
+            lines = list(r)
+            try:
+                return lines[block_number][0]
+            except IndexError:
+                return start_block
+    except FileNotFoundError:
+        with open('block_log.csv', 'w', newline="") as log_file:
+            w = csv.writer(log_file)
+            w.writerow((start_block, 0))
+            print("made file")
+            return start_block
+
 def get_latest_block_hash():
-    addr = 'mnzaoQWZBNjrRXRtDQf7Ht6D2cMEZRPLev'
-    h160 = decode_base58(addr)
-
-    node = SimpleNode('testnet.programmingbitcoin.com', testnet=True, logging=False)
-    bf = BloomFilter(size=30, function_count=5, tweak=1729)
-    bf.add(h160)
+    node = SimpleNode(HOST, testnet=True, logging=False)
     node.handshake()
-    node.send(bf.filterload())
-
-    start_block = bytes.fromhex('000000004faccebbff8191ee0fdc1fee68ad3e5c19d8be22b024dbdcbfee0923')
+    start_block = bytes.fromhex(read_log(-2))
 
     getheaders = GetHeadersMessage(start_block=start_block)
     node.send(getheaders)
@@ -46,20 +57,6 @@ def get_latest_block_hash():
         getdata.add_data(FILTERED_BLOCK_DATA_TYPE, block.hash())
         last_block = block.hash()
     return last_block.hex()
-
-def read_log():
-    try:
-        with open('block_log.csv', 'r') as log_file:
-            r = csv.reader(log_file)
-            lines = list(r)
-            return lines[-1][0]
-    except FileNotFoundError:
-        start_block = "0000000062043fb2e5091e43476e485ddc5d726339fd12bb010d5aeaf2be8206"
-        with open('block_log.csv', 'w', newline="") as log_file:
-            w = csv.writer(log_file)
-            w.writerow((start_block, 0))
-            print("made file")
-            return start_block
 
 def find_user(addr):
     with open('users.csv', 'r') as users_file:
@@ -131,13 +128,12 @@ def input_parser(current_addr, node):
 def block_syncer():
     while True:
         now_hash = get_latest_block_hash()
-        then_hash = read_log()
-        print(then_hash)
+        then_hash = read_log(-1)
         current_addr = get_all_addr()
-        node = SimpleNode('testnet.programmingbitcoin.com', testnet=True, logging=False)
+        node = SimpleNode(HOST, testnet=True, logging=False)
         bf = BloomFilter(size=30, function_count=5, tweak=1729)
 
-        if now_hash != then_hash:
+        if now_hash != then_hash and then_hash != None:
             for addr in current_addr:
                 h160 = decode_base58(addr)
                 bf.add(h160)

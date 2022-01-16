@@ -5,6 +5,8 @@ from ProgrammingBitcoin.ecc import PrivateKey
 from ProgrammingBitcoin.helper import hash256, little_endian_to_int, encode_varint, read_varint, decode_base58, SIGHASH_ALL
 from ProgrammingBitcoin.script import p2pkh_script, Script
 from ProgrammingBitcoin.tx import Tx, TxIn, TxOut
+from ProgrammingBitcoin.network import SimpleNode
+from network_settings import HOST
 import csv
 from jbok import make_address, get_pkobj
 
@@ -98,12 +100,12 @@ def send_transaction(username):
 	for tx_out in tx_obj.tx_outs:
 		print(tx_out)
 
-	node = SimpleNode('testnet.programmingbitcoin.com', testnet=True, logging=False)
+	node = SimpleNode(HOST, testnet=True, logging=False)
 	node.handshake()
 	node.send(tx_obj)
 	print('tx sent!')
 
-	#deleting utxos from utxo set
+	#deleting utxos from utxo pool
 	del_length = len(tx_obj.tx_ins) #3
 	real_len = 0
 
