@@ -1,6 +1,6 @@
 
 from user_manager import make_user, user_login, has_login
-from stx import get_balance, send_transaction
+from stx import get_balance, multi_send
 from rtx import recieve_tx
 print("NOTE: this wallet only operates on the testnet, enter 'sign out' to log into a different account and 'quit' to exit.")
 
@@ -12,7 +12,7 @@ while active:
 	print("What can I help you with?")
 	option = input("You: ")
 	if option == "stx":
-		send_transaction(username)
+		multi_send(username)
 	elif option == "rtx":
 		recieve_tx(username)
 	elif option == "cb":

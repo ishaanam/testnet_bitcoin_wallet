@@ -2,3 +2,6 @@ __pycache__/
 *.csv
 hd_wallet.py
 network_testing.py
+.DS_store
+segwit_pb/
+swtx.py
