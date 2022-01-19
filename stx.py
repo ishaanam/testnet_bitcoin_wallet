@@ -5,9 +5,15 @@ from ProgrammingBitcoin.helper import hash256, little_endian_to_int, encode_vari
 from ProgrammingBitcoin.script import p2pkh_script, Script
 from ProgrammingBitcoin.tx import Tx, TxIn, TxOut
 from ProgrammingBitcoin.network import SimpleNode
-from network_settings import HOST
 import csv
 from jbok import make_address, get_pkobj
+
+try:
+    from network_settings import HOST
+except (ModuleNotFoundError, ImportError):
+    with open("network_settings.py", "w") as net_file:
+        net_file.write('HOST = "testnet.programmingbitcoin.com"')
+        from network_settings import HOST
 
 def get_balance(username):
     amount = 0

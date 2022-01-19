@@ -14,11 +14,17 @@ from ProgrammingBitcoin.network import (
 )
 from ProgrammingBitcoin.script import p2pkh_script, Script
 from ProgrammingBitcoin.tx import Tx, TxIn, TxOut
-from network_settings import HOST
 
 import csv
 import time
 import signal
+
+try:
+    from network_settings import HOST
+except (ModuleNotFoundError, ImportError):
+    with open("network_settings.py", "w") as net_file:
+        net_file.write('HOST = "testnet.programmingbitcoin.com"')
+        HOST = 'testnet.programmingbitcoin.com'
 
 def read_log(block_number):
     start_block = "0000000062043fb2e5091e43476e485ddc5d726339fd12bb010d5aeaf2be8206"
@@ -110,6 +116,7 @@ def input_parser(current_addr, node):
                 for i, tx_out in enumerate(message.tx_outs):
                     for addr in current_addr:
                         if tx_out.script_pubkey.address(testnet=True) == addr:
+                            print(tx_out.script_pubkey)
                             prev_tx = message.hash()
                             prev_tx = prev_tx.hex()
                             prev_index = i
