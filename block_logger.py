@@ -116,14 +116,14 @@ def input_parser(current_addr, node):
                 for i, tx_out in enumerate(message.tx_outs):
                     for addr in current_addr:
                         if tx_out.script_pubkey.address(testnet=True) == addr:
-                            print(tx_out.script_pubkey)
                             prev_tx = message.hash()
                             prev_tx = prev_tx.hex()
                             prev_index = i
                             prev_amount = tx_out.amount
                             r_user = find_user(addr)
+                            locking_script = tx_out.script_pubkey
                             with open(f'{r_user}_utxos.csv', 'a', newline="") as utxo_file:
-                                tupl = (prev_tx, prev_index, prev_amount, addr)
+                                tupl = (prev_tx, prev_index, prev_amount, addr, locking_script)
                                 writer = csv.writer(utxo_file)
                                 writer.writerow(tupl)
                             print(f"{r_user} recieved {prev_amount} satoshis")

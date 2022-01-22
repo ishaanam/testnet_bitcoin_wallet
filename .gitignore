@@ -1,8 +1,8 @@
 __pycache__/
+.DS_store
 *.csv
 network_settings.py
-.DS_store
 hd_wallet.py
 segwit_pb/
 swtx.py
-test_sig_hash.py
+*.swp

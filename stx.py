@@ -2,9 +2,10 @@ import time
 
 from ProgrammingBitcoin.ecc import PrivateKey
 from ProgrammingBitcoin.helper import hash256, little_endian_to_int, encode_varint, read_varint, decode_base58, SIGHASH_ALL
-from ProgrammingBitcoin.script import p2pkh_script, Script
+from ProgrammingBitcoin.script import p2pkh_script, Script 
 from ProgrammingBitcoin.tx import Tx, TxIn, TxOut
 from ProgrammingBitcoin.network import SimpleNode
+from ProgrammingBitcoin.op import OP_CODE_FUNCTIONS
 import csv
 from jbok import make_address, get_pkobj
 
@@ -23,6 +24,12 @@ def get_balance(username):
         for line in lines:
             amount += int(line[2])
     return amount
+
+def make_p2pkh_script(s):
+    p2pkh_script = [0x76, 0xa9, "", 0x88, 0xac]
+    s = s.split()
+    p2pkh_script[2] = bytes.fromhex(s[2])
+    return Script(p2pkh_script)
 
 def multi_send(username):
     num_r = input("Number of recipients: ")
@@ -62,9 +69,10 @@ def multi_send(username):
 
     my_tx_ins = []
     my_wallets = []
+    my_script_sigs = []
     used_utxos = []
     used_amount = 0
-    
+
     with open(f"{username}.csv", "r") as key_file:
         r = csv.reader(key_file)
         keys = list(r)
@@ -78,7 +86,9 @@ def multi_send(username):
         prev_tx = bytes.fromhex(utxo[0])
         used_utxos.append(prev_tx)
         prev_index = int(utxo[1])
+        script_sig = utxo[4]
         my_tx_ins.append(TxIn(prev_tx, prev_index))
+        my_script_sigs.append(script_sig)
         for key in keys:
             if key[1] == utxo[3]:
                 my_wallets.append(key[0])
@@ -93,9 +103,14 @@ def multi_send(username):
 
     for i, tx_in in enumerate(tx_obj.tx_ins):
         private_key = get_pkobj(my_wallets[i])
-        if tx_obj.sign_input(i, private_key) == False:
-            print("failed to sign transaction")
-            return None
+        script_pubkey = make_p2pkh_script(my_script_sigs[i])
+        z = tx_obj.sig_hash(i, script_pubkey)
+        der = private_key.sign(z).der()
+        sig = der + SIGHASH_ALL.to_bytes(1, 'big')
+        sec = private_key.point.sec()
+        script_sig = Script([sig, sec])
+        tx_obj.tx_ins[0].script_sig = script_sig
+    
     print("hex serialization: ")
     print(tx_obj.serialize().hex())
     print("transaction id")
