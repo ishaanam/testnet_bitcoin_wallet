@@ -57,8 +57,6 @@ class HD_Key(PrivateKey):
             I = hmac.new(key, data, hashlib.sha512).digest()
             L = I[:32]
             R = I[32:]
-            #ck = S256Field(int.from_bytes(L, 'big')) + S256Field(int(self.k, 16))
-            #ck = ck.num
             ck = (int.from_bytes(L, 'big') + int(self.k, 16)) % num
             cc = R
             c_level = int(self.level) + 1
@@ -114,44 +112,6 @@ def new_tprv():
     tprv = HD_Key.new_master_key("00", "00000000", "00000000", seed, testnet=True)
     return tprv.serialize(priv=True) 
 
-# def generate_mnemonic(username):
-#   mnemo = Mnemonic('english')
-#   words = mnemo.generate(strength=128)
-#   passphrase = getpass.getpass(prompt="Passphrase: ")
-#   seed = mnemo.to_seed(words, passphrase=passphrase)
-#   entropy = mnemo.to_entropy(words)
-#   print(f"write these words down: {words}")
-#   words = words.split()
-#   print(delimeter.join(words))
-#   print(seed.hex())
-#   return seed.hex()
-# # print(f"words: {words}")
-# # print(f"seed: {seed}")
-# # print(f"entropy: {entropy}")
-#   # with open(f'{username}_pk.csv', 'w') as pk_file:
-#   #   writer = csv.writer(pk_file)
-#   #   writer.writerow((seed.hex(), entropy.hex(), delimeter.join(words)))
-
-# # seed = generate_mnemonic('nova408')
-
-# # print(bytes.fromhex(seed))
-
-# def get_address(seed, counter):
-#   # with open(f"{username}_pk.csv", "r") as pk_file:
-#   #   r = csv.reader(pk_file)
-#   #   lines = list(r)
-#   seed = bytes.fromhex(seed)
-#   i = hmac.new(b"Bitcoin seed", seed, hashlib.sha512).digest()
-#   key = i[:32]
-#   chain = i[32:]
-#   print("extended private key:")
-#   print(f"key: {key.hex()}")
-#   print(f"chaincode: {chain.hex()}")
-#   #print(key.hex())
-#   #print(chain.hex())
-#   addr = hmac.new(b"", i, hashlib.sha512).digest()
-
-#   # seed = lines[0][0]
 class TestHD(unittest.TestCase):
     # Made using test vectors from BIP 32
     def test_parse_xprv1(self):
