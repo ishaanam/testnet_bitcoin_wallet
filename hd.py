@@ -14,8 +14,8 @@ def new_mnemonic():
     mnemo = Mnemonic('english')
     words = mnemo.generate(strength=128)
     print(words)
-    #passphrase = getpass.getpass(prompt="Passphrase: ")
-    seed = mnemo.to_seed(words, passphrase="")
+    passphrase = getpass.getpass(prompt="Passphrase(if none just enter): ")
+    seed = mnemo.to_seed(words, passphrase=passphrase)
     return seed
 
 class HD_Key(PrivateKey):
@@ -106,10 +106,19 @@ class HD_Key(PrivateKey):
         k = s[84:148]
         return cls(level, fingerprint, index, k, c, testnet)
 
-def new_tprv():
-    seed = new_mnemonic()
-    tprv = HD_Key.new_master_key("00", "00000000", "00000000", seed, testnet=True)
-    return tprv.serialize(priv=True) 
+    @staticmethod
+    def recover_wallet(words):
+        mnemo = Mnemonic('english')
+        passphrase = getpass.getpass(prompt="Passphrase(if none just enter): ")
+        seed = mnemo.to_seed(words, passphrase=passphrase)
+        key = HD_Key.new_master_key("00", "00000000", "00000000", seed, testnet=True)
+        return key.serialize(priv=True)
+    
+    @staticmethod
+    def new_tprv():
+        seed = new_mnemonic()
+        tprv = HD_Key.new_master_key("00", "00000000", "00000000", seed, testnet=True)
+        return tprv.serialize(priv=True) 
 
 class TestHD(unittest.TestCase):
     # Made using test vectors from BIP 32

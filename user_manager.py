@@ -2,7 +2,7 @@ import csv
 import getpass
 from hashlib import sha256
 from block_logger import get_all_users
-from hd import new_tprv
+from hd import HD_Key 
 
 def save_pass(password):
     password = sha256(password.encode())
@@ -30,7 +30,16 @@ def make_user():
         else:
             print("The passwords don't match")
     pass_hash = save_pass(password)
-    tprv = new_tprv()
+    recover = input("Would you like to recover a testnet wallet?[y/n]: ")
+    if recover == "y":
+        choice = input("Would you like to import a tprv or enter your mnemonic code words?[tprv/words]: ")
+        if choice == "words":
+            words = input("Please enter your words seperated by spaces: ")
+            tprv = HD_Key.recover_wallet(words)
+        else:
+            tprv = input("tprv: ")
+    else:
+        tprv = HD_Key.new_tprv()
     tupl = (username, pass_hash, tprv, 0)
     try: 
         with open("users.csv", "a", newline="") as user_file:

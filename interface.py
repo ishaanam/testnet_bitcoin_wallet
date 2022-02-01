@@ -1,11 +1,11 @@
-from jbok import get_tpub
+from jbok import get_tpub, get_tprv
 from user_manager import make_user, user_login, has_login
 from stx import get_balance, multi_send
 from rtx import recieve_tx
 print("NOTE: this wallet only operates on the testnet, enter 'sign out' to log into a different account and 'quit' to exit.")
 
 username = has_login()
-print("I can: calculate your current balance[cb], send transactions[stx], recieve transactions[rtx], and get your extended public key.[tpub]")
+print("I can: calculate your current balance[cb], send transactions[stx], recieve transactions[rtx], and get your extended public key [tpub] or your extended private key[tprv]")
 
 active = True
 while active:
@@ -23,3 +23,5 @@ while active:
         username = has_login()
     elif option == "tpub":
         print(get_tpub(username))
+    elif option == "tprv":
+        print(get_tprv(username))

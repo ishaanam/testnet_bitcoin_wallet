@@ -34,13 +34,17 @@ def make_address(username):
         writer.writerows(lines)
     return address
 
-def get_tpub(username):
+def get_tprv(username):
     with open(f'users.csv', 'r') as user_file:
         r = csv.reader(user_file)
         lines = list(r)
         for line in lines:
             if line[0] == username:
                 tprv = line[2]
-        key = HD_Key.parse_priv(tprv)
-        tpub = key.serialize()
-        return tpub
+        return tprv
+
+def get_tpub(username):
+    tprv = get_tprv(username)
+    key = HD_Key.parse_priv(tprv)
+    tpub = key.serialize()
+    return tpub
