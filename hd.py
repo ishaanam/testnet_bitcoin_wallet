@@ -5,7 +5,6 @@ import hashlib
 import csv
 import hmac
 import getpass
-import ecdsa
 import unittest 
 import base58
 
