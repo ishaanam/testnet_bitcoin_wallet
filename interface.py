@@ -16,7 +16,10 @@ while active:
     elif option == "rtx":
         recieve_tx(username)
     elif option == "cb":
-        print(f"Your current balance is: {get_balance(username)} Satoshis")
+        balance = get_balance(username, unconfirmed=True)
+        print(f"Your current balance is: {balance[0]} Satoshis")
+        if balance[1] != 0:
+            print(f"You also have an additional unconfirmed balance of {balance[1]} Satoshis")
     elif option == "quit":
         active = False
     elif option == "sign out":

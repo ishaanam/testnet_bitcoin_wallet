@@ -4,6 +4,7 @@ __pycache__/
 network_settings.py
 segwit_pb/
 swtx.py
+test_block_log.py
 hd_wallet.py
 hd_test.py
 *.swp

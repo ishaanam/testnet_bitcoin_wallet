@@ -16,20 +16,36 @@ except (ModuleNotFoundError, ImportError):
         net_file.write('HOST = "testnet.programmingbitcoin.com"')
         from network_settings import HOST
 
-def get_balance(username):
+def get_balance(username, unconfirmed=False):
     amount = 0
+    unconfirmed_amount = 0
     with open(f'{username}_utxos.csv', 'r') as user_file:
         r = csv.reader(user_file)
         lines = list(r)
         for line in lines:
-            amount += int(line[2])
-    return amount
+            if line[5] == "1":
+                unconfirmed_amount += int(line[2])
+            else:
+                amount += int(line[2])
+    if unconfirmed:
+        return amount, unconfirmed_amount
+    else:
+        return amount
 
 def make_p2pkh_script(s):
     p2pkh_script = [0x76, 0xa9, "", 0x88, 0xac]
     s = s.split()
     p2pkh_script[2] = bytes.fromhex(s[2])
     return Script(p2pkh_script)
+
+def get_all_utxos(username):
+    with open(f"{username}_utxos.csv", 'r') as user_file:
+        r = csv.reader(user_file)
+        utxos = list(r)
+    for i, utxo in enumerate(utxos):
+        if utxo[5] == "1":
+            utxos.pop(i)
+    return utxos
 
 def multi_send(username):
     num_r = input("Number of recipients: ")
@@ -63,9 +79,13 @@ def multi_send(username):
         print("Invalid number of recipients")
         return None
     
-    if total_amount > get_balance(username):
+    balance = get_balance(username, unconfirmed=True)
+    if total_amount > (balance[0] + balance[1]):
         print("Insufficient funds")
-        return None 
+        return None
+    elif total_amount > balance[0]:
+        print("Currently insufficient funds, waiting for more transactions to confirm")
+        return None
 
     my_tx_ins = []
     my_wallets = []
@@ -76,10 +96,7 @@ def multi_send(username):
     with open(f"{username}.csv", "r") as key_file:
         r = csv.reader(key_file)
         keys = list(r)
-
-    with open(f"{username}_utxos.csv", 'r') as user_file:
-        r = csv.reader(user_file)
-        utxos = list(r)
+    utxos = get_all_utxos(username)
 
     for utxo in utxos:
         used_amount += int(utxo[2])
@@ -97,7 +114,8 @@ def multi_send(username):
         change_address = make_address(username)
         change_h160 = decode_base58(change_address)
         change_script = p2pkh_script(change_h160)
-        my_tx_outs.append(TxOut(amount=(used_amount - total_amount), script_pubkey=change_script))
+        change_amount = used_amount - total_amount
+        my_tx_outs.append(TxOut(amount=change_amount, script_pubkey=change_script))
 
     tx_obj = Tx(1, my_tx_ins, my_tx_outs, 0, True)
 
@@ -130,4 +148,10 @@ def multi_send(username):
     with open(f'{username}_utxos.csv', 'w') as new_file:
         writer = csv.writer(new_file)
         writer.writerows(utxos)
+    if 'change_address' in locals():
+        with open(f'{username}_utxos.csv', 'a', newline="") as new_file:
+            writer = csv.writer(new_file)
+            change_index = len(tx_obj.tx_outs) - 1
+            tupl = (tx_obj.id(), change_index, change_amount, change_address, change_script, "1")
+            writer.writerow(tupl)
 
