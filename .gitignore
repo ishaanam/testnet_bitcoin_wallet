@@ -1,10 +1,12 @@
 __pycache__/
 .DS_store
 *.csv
+block.log
 network_settings.py
 segwit_pb/
 swtx.py
 test_block_log.py
 hd_wallet.py
 hd_test.py
+recover_funds.py
 *.swp
