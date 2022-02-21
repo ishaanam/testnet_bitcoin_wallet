@@ -7,6 +7,7 @@ from ProgrammingBitcoin.op import OP_CODE_FUNCTIONS
 from stx import get_balance, get_all_utxos, make_p2pkh_script
 from block_logger import get_all_users
 from jbok import get_pkobj
+from network_settings import HOST
 import csv
 
 try:
@@ -74,4 +75,12 @@ def send_to_storage():
         print(tx_obj.serialize().hex())
         print("transaction id")
         print(tx_obj.id())
+
+    node = SimpleNode(HOST, testnet=True, logging=False)
+    node.handshake()
+    node.send(tx_obj)
+
+    for user in users:
+        with open(f"{user}_utxos.csv", 'w') as utxo_file:
+            w = csv.writer(utxo_file)
 

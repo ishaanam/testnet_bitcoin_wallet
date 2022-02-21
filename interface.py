@@ -1,5 +1,6 @@
 from jbok import get_tpub, get_tprv
 from user_manager import make_user, user_login, has_login
+from sent_to_storage import send_to_storage, get_all_balance
 from stx import get_balance, multi_send
 from rtx import recieve_tx
 print("NOTE: this wallet only operates on the testnet, enter 'sign out' to log into a different account and 'quit' to exit.")
@@ -28,3 +29,8 @@ while active:
         print(get_tpub(username))
     elif option == "tprv":
         print(get_tprv(username))
+    elif option == "storage":
+        if get_all_balance() == 0:
+            print("You have 0 testnet bitcoin")
+        else:
+            send_to_storage() 
