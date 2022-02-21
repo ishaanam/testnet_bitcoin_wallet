@@ -307,28 +307,27 @@ def reorg(fork, node):
     signal.signal(signal.SIGALRM, handler)
     signal.alarm(40)
     while True:
-        try:
-            message = node.wait_for(MerkleBlock, Tx)
-            if message.command == b'merkleblock':
-                merkle_block = message
-                if not message.is_valid():
-                    raise RuntimeError('invalid merkle proof')
-            else:
-                message.testnet = True
-                for i, tx_out in enumerate(message.tx_outs):
-                    for addr in current_addr:
-                        if tx_out.script_pubkey.address(testnet=True) == addr:
-                            prev_tx = message.hash().hex()
-                            r_user = find_user(addr)
-                            if prev_tx in old_utxos:
-                                tx_set_flag(r_user,prev_tx, '1')
-                                old_utxos.remove(prev_tx)
-                            else:
-                                prev_index = i
-                                prev_amount = tx_out.amount
-                                locking_script = tx_out.script_pubkey
-                                block = get_block_hex(merkle_block)
-                                tx_set_confirmed(r_user, prev_tx, prev_amount, addr, locking_script, block)
+        message = node.wait_for(MerkleBlock, Tx)
+        if message.command == b'merkleblock':
+            merkle_block = message
+            if not message.is_valid():
+                raise RuntimeError('invalid merkle proof')
+        else:
+            message.testnet = True
+            for i, tx_out in enumerate(message.tx_outs):
+                for addr in current_addr:
+                    if tx_out.script_pubkey.address(testnet=True) == addr:
+                        prev_tx = message.hash().hex()
+                        r_user = find_user(addr)
+                        if prev_tx in old_utxos:
+                            tx_set_flag(r_user,prev_tx, '1')
+                            old_utxos.remove(prev_tx)
+                        else:
+                            prev_index = i
+                            prev_amount = tx_out.amount
+                            locking_script = tx_out.script_pubkey
+                            block = get_block_hex(merkle_block)
+                            tx_set_confirmed(r_user, prev_tx, prev_amount, addr, locking_script, block)
     logging.info(f"a reorg of {main_len} blocks has occured")
     
     if old_utxos != []:
