@@ -226,7 +226,8 @@ def tx_set_confirmed(user, tx_id, index, amount, address, scriptPubKey, block_ha
             if utxo[0] == tx_id:
                 existing_index = i
     if existing_index != None:
-        utxos[existing_index][5] = 1
+        utxos[existing_index][6] = 1
+        utxos[existing_index][5] = block_hash
     else:
         utxos.append([tx_id, index, amount, address, scriptPubKey, block_hash, 1])
     with open(f"{user}_utxos.csv", 'w', newline="") as utxo_file:

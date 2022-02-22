@@ -93,7 +93,6 @@ def block_syncer():
                                         block = get_block_hex(merkle_block)
                                         tx_set_confirmed(r_user, prev_tx, prev_index, prev_amount, addr, locking_script, block)
                                         logging.info(f"{r_user} recieved {prev_amount} satoshis")
-                            print(message.tx_ins[0].prev_tx)
                     except SyntaxError:
                         logging.info("recieved an invalid script")
             except RuntimeError:
