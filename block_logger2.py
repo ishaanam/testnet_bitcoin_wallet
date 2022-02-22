@@ -15,7 +15,7 @@ from ProgrammingBitcoin.network import (
 from ProgrammingBitcoin.script import p2pkh_script, Script
 from ProgrammingBitcoin.tx import Tx, TxIn, TxOut
 
-from block_utils import start_log, get_latest_block_hash, get_all_users, get_all_addr, find_user, handler, get_block_hex, read_log,all_hashes, prev_fork_hash, get_forks, make_fork_file, write_block, reorg, need_reorg 
+from block_utils import start_log, get_latest_block_hash, get_all_users, get_all_addr, find_user, handler, get_block_hex, read_log,all_hashes, prev_fork_hash, get_forks, make_fork_file, write_block, reorg, need_reorg, tx_set_confirmed, tx_set_flag 
 
 import csv
 import time
@@ -66,12 +66,37 @@ def block_syncer():
                 else:
                     write_block(block.prev_block.hex(), block.hash().hex())
                 reorg_file = need_reorg()
-                ### UNTESTED ###
                 if reorg_file != None:
                     reorg(reorg_file)
             node.send(getdata)
-
-                
+            # SET SIGNAL ALARM
+            signal.signal(signal.SIGALRM, handler)
+            signal.alarm(40)
+            try:
+                while True:
+                    try:
+                        message = node.wait_for(MerkleBlock, Tx)
+                        if message.command == b'merkleblock':
+                            merkle_block = message
+                            if not message.is_valid():
+                                raise RuntimeError('inalid merkle proof')
+                        else:
+                            message.testnet = True
+                            for i, tx_out in enumerate(message.tx_outs):
+                                for addr in current_addr:
+                                    if tx_out.script_pubkey.address(testnet=True) == addr:
+                                        prev_tx = message.hash().hex()
+                                        prev_index = i
+                                        prev_amount = tx_out.amount
+                                        r_user = find_user(addr)
+                                        locking_script = tx_out.script_pubkey
+                                        block = get_block_hex(merkle_block)
+                                        tx_set_confirmed(r_user, prev_tx, prev_amount, addr, locking_script, block)
+                                        logging.info(f"{r_user} recieved {prev_amount} satoshis")
+                    except SyntaxError:
+                        logging.info("recieved an invalid script")
+            except RuntimeError:
+                pass
 
         time.sleep(10)
 

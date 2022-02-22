@@ -12,9 +12,12 @@ from ProgrammingBitcoin.network import (
 )
 from ProgrammingBitcoin.script import p2pkh_script, Script
 from ProgrammingBitcoin.tx import Tx, TxIn, TxOut
+from ProgrammingBitcoin.bloomfilter import BloomFilter
+from ProgrammingBitcoin.merkleblock import MerkleBlock
 
 import csv
 import logging
+import signal
 from os.path import exists
 
 try:
@@ -23,6 +26,8 @@ except (ModuleNotFoundError, ImportError):
     with open("network_settings.py", "w") as net_file:
         net_file.write('HOST = "testnet.programmingbitcoin.com"')
         HOST = 'testnet.programmingbitcoin.com'
+
+logging.basicConfig(filename='block.log', format='%(levelname)s:%(message)s', level=logging.DEBUG)
 
 def start_log():
     # block log format: block_hash, height
@@ -113,7 +118,7 @@ def get_all_addr():
     return addresses
 
 def handler(signum, frame):
-    raise Exception("timed out")
+    raise RuntimeError("timed out")
 
 def get_block_hex(m):
     block = Block(m.version, m.prev_block, m.merkle_root, m.timestamp, m.bits, m.nonce)
@@ -241,22 +246,33 @@ def tx_set_flag(user, tx_id, flag):
         w = csv.writer(utxo_file)
         w.writerows(utxos)
 
-def tx_set_flag_no_user(tx_id, flag):
-    all_users = get_all_users()
-    for user in all_users:
-        with open(f"{user}_utxos.csv", 'r') as utxo_file:
-            r = csv.reader(utxo_file)
-            utxos = list(r)
-            for i, utxo in enumerate(utxos):
-                if utxo[0] == tx_id:
-                    existing_index = i
-        if existing_index != None:
-            utxos[existing_index][-1] = flag 
-            with open(f"{user}_utxos.csv", 'w') as utxo_file:
-                w = csv.writer(utxo_file)
-                w.writerows(utxos)
 
-def reorg(fork, node):
+def input_parser(current_addr, node):
+    while True:
+        message = node.wait_for(MerkleBlock, Tx)
+        if message.command == b'merkleblock':
+            merkle_block = message
+            if not message.is_valid():
+                raise RuntimeError('invalid merkle proof')
+        else:
+            message.testnet = True
+            for i, tx_out in enumerate(message.tx_outs):
+                for addr in current_addr:
+                    if tx_out.script_pubkey.address(testnet=True) == addr:
+                        prev_tx = message.hash().hex()
+                        r_user = find_user(addr)
+                        if prev_tx in old_utxos:
+                            tx_set_flag(r_user,prev_tx, '1')
+                            old_utxos.remove(prev_tx)
+                        else:
+                            prev_index = i
+                            prev_amount = tx_out.amount
+                            locking_script = tx_out.script_pubkey
+                            block = get_block_hex(merkle_block)
+                            tx_set_confirmed(r_user, prev_tx, prev_amount, addr, locking_script, block)
+
+def reorg(fork):
+    node = SimpleNode(HOST, testnet=True, logging=False)
     with open(fork, "r") as fork_file:
         r = csv.reader(fork_file)
         fork_file= list(r)
@@ -290,7 +306,7 @@ def reorg(fork, node):
             r = csv.reader(utxo_file)
             utxos = list(r)
             for utxo in utxos:
-                if utxo[4] in old:
+                if utxo[5] in old:
                     old_utxos.append(utxo[0])
                     tx_set_flag(user, utxo[0], '0')
     # get utxos mined in the new blocks and figure out if any userss have been double-spent 
@@ -302,34 +318,13 @@ def reorg(fork, node):
     getdata = GetDataMessage()
 
     for block in new_blocks:
-        getdata.add_data(block)
+        getdata.add_data(FILTERED_BLOCK_DATA_TYPE, bytes.fromhex(block[0]))
     node.send(getdata)
     signal.signal(signal.SIGALRM, handler)
-    signal.alarm(40)
-    while True:
-        message = node.wait_for(MerkleBlock, Tx)
-        if message.command == b'merkleblock':
-            merkle_block = message
-            if not message.is_valid():
-                raise RuntimeError('invalid merkle proof')
-        else:
-            message.testnet = True
-            for i, tx_out in enumerate(message.tx_outs):
-                for addr in current_addr:
-                    if tx_out.script_pubkey.address(testnet=True) == addr:
-                        prev_tx = message.hash().hex()
-                        r_user = find_user(addr)
-                        if prev_tx in old_utxos:
-                            tx_set_flag(r_user,prev_tx, '1')
-                            old_utxos.remove(prev_tx)
-                        else:
-                            prev_index = i
-                            prev_amount = tx_out.amount
-                            locking_script = tx_out.script_pubkey
-                            block = get_block_hex(merkle_block)
-                            tx_set_confirmed(r_user, prev_tx, prev_amount, addr, locking_script, block)
-    logging.info(f"a reorg of {main_len} blocks has occured")
-    
-    if old_utxos != []:
-        logging.info(f"You may have been double spent with the following transactions: {old_utxos}")
-                                
+    signal.alarm(10)
+    try:
+        input_parser(current_addr, node)
+    except RuntimeError:
+        logging.info(f"a reorg of {main_len} blocks has occured")
+        if old_utxos != []:
+            logging.info(f"You may have been double spent with the following transactions: {old_utxos}")
