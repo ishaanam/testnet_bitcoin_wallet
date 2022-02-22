@@ -211,13 +211,13 @@ def need_reorg():
     return None
 
 # set flag 0
-def tx_set_new(user, tx_id, amount, address, scriptPubKey, block_hash):
+def tx_set_new(user, tx_id, index, amount, address, scriptPubKey, block_hash):
     with open(f"{user}_utxos.csv", 'a', newline="") as utxo_file:
         w = csv.writer(utxo_file)
-        w.writerow([tx_id, amount, address, scriptPubKey, block_hash, 0])
+        w.writerow([tx_id, index, amount, address, scriptPubKey, block_hash, 0])
 
 # set flag 1
-def tx_set_confirmed(user, tx_id, amount, address, scriptPubKey, block_hash):
+def tx_set_confirmed(user, tx_id, index, amount, address, scriptPubKey, block_hash):
     with open(f"{user}_utxos.csv", 'r') as utxo_file:
         r = csv.reader(utxo_file)
         utxos = list(r)
@@ -228,7 +228,7 @@ def tx_set_confirmed(user, tx_id, amount, address, scriptPubKey, block_hash):
     if existing_index != None:
         utxos[existing_index][5] = 1
     else:
-        utxos.append([tx_id, amount, address, scriptPubKey, block_hash, 1])
+        utxos.append([tx_id, index, amount, address, scriptPubKey, block_hash, 1])
     with open(f"{user}_utxos.csv", 'w', newline="") as utxo_file:
         w = csv.writer(utxo_file)
         w.writerows(utxos)
@@ -269,7 +269,7 @@ def input_parser(current_addr, node):
                             prev_amount = tx_out.amount
                             locking_script = tx_out.script_pubkey
                             block = get_block_hex(merkle_block)
-                            tx_set_confirmed(r_user, prev_tx, prev_amount, addr, locking_script, block)
+                            tx_set_confirmed(r_user, prev_tx, index, prev_amount, addr, locking_script, block)
 
 def reorg(fork):
     node = SimpleNode(HOST, testnet=True, logging=False)

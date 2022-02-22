@@ -1,4 +1,5 @@
 import time
+import csv
 
 from ProgrammingBitcoin.ecc import PrivateKey
 from ProgrammingBitcoin.helper import hash256, little_endian_to_int, encode_varint, read_varint, decode_base58, SIGHASH_ALL
@@ -6,8 +7,8 @@ from ProgrammingBitcoin.script import p2pkh_script, Script
 from ProgrammingBitcoin.tx import Tx, TxIn, TxOut
 from ProgrammingBitcoin.network import SimpleNode
 from ProgrammingBitcoin.op import OP_CODE_FUNCTIONS
-import csv
 from jbok import make_address, get_pkobj
+from block_utils import tx_set_flag, tx_set_new
 
 try:
     from network_settings import HOST
@@ -23,9 +24,9 @@ def get_balance(username, unconfirmed=False):
         r = csv.reader(user_file)
         lines = list(r)
         for line in lines:
-            if line[5] == "1":
+            if line[-1] == "0":
                 unconfirmed_amount += int(line[2])
-            else:
+            elif line[-1] == "1":
                 amount += int(line[2])
     if unconfirmed:
         return amount, unconfirmed_amount
@@ -43,7 +44,9 @@ def get_all_utxos(username):
         r = csv.reader(user_file)
         utxos = list(r)
     for i, utxo in enumerate(utxos):
-        if utxo[5] == "1":
+        if utxo[-1] == "1":
+            pass
+        else:
             utxos.pop(i)
     return utxos
 
@@ -101,7 +104,7 @@ def multi_send(username):
     for utxo in utxos:
         used_amount += int(utxo[2])
         prev_tx = bytes.fromhex(utxo[0])
-        used_utxos.append(prev_tx)
+        used_utxos.append(utxo[0])
         prev_index = int(utxo[1])
         script_sig = utxo[4]
         my_tx_ins.append(TxIn(prev_tx, prev_index))
@@ -139,19 +142,9 @@ def multi_send(username):
     node.send(tx_obj)
     print('tx sent!')
 
-    del_length = len(tx_obj.tx_ins)
-    real_len = 0
-
-    while del_length > real_len:
-        utxos.pop(0)
-        real_len += 1
-    with open(f'{username}_utxos.csv', 'w') as new_file:
-        writer = csv.writer(new_file)
-        writer.writerows(utxos)
+    for utxo in used_utxos:
+        tx_set_flag(username, utxo, '2') 
+    
     if 'change_address' in locals():
-        with open(f'{username}_utxos.csv', 'a', newline="") as new_file:
-            writer = csv.writer(new_file)
-            change_index = len(tx_obj.tx_outs) - 1
-            tupl = (tx_obj.id(), change_index, change_amount, change_address, change_script, "1")
-            writer.writerow(tupl)
-
+        change_index = len(tx_obj.tx_outs) - 1 
+        tx_set_new(username, tx_obj.id(), change_index, change_amount, change_address, change_script, "0")
