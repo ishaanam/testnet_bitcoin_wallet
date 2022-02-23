@@ -1,7 +1,7 @@
 import csv
 import getpass
 from hashlib import sha256
-from block_logger import get_all_users
+from block_utils import get_all_users
 from hd import HD_Key 
 
 def save_pass(password):

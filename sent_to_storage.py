@@ -5,7 +5,7 @@ from ProgrammingBitcoin.tx import Tx, TxIn, TxOut
 from ProgrammingBitcoin.network import SimpleNode
 from ProgrammingBitcoin.op import OP_CODE_FUNCTIONS
 from stx import get_balance, get_all_utxos, make_p2pkh_script
-from block_logger import get_all_users
+from block_utils import get_all_users
 from jbok import get_pkobj
 from network_settings import HOST
 import csv
