@@ -15,8 +15,7 @@ from ProgrammingBitcoin.network import (
 from ProgrammingBitcoin.script import p2pkh_script, Script
 from ProgrammingBitcoin.tx import Tx, TxIn, TxOut
 
-from block_utils import start_log, get_latest_block_hash, get_all_users, get_all_addr, find_user, handler, get_block_hex, read_log,all_hashes, prev_fork_hash, get_forks, make_fork_file, write_block, reorg, need_reorg, tx_set_confirmed, tx_set_flag 
-
+from block_utils import * 
 import csv
 import time
 import signal
@@ -82,6 +81,7 @@ def block_syncer():
                                 raise RuntimeError('inalid merkle proof')
                         else:
                             message.testnet = True
+                            ids = get_all_ids()
                             for i, tx_out in enumerate(message.tx_outs):
                                 for addr in current_addr:
                                     if tx_out.script_pubkey.address(testnet=True) == addr:
@@ -93,6 +93,10 @@ def block_syncer():
                                         block = get_block_hex(merkle_block)
                                         tx_set_confirmed(r_user, prev_tx, prev_index, prev_amount, addr, locking_script, block)
                                         logging.info(f"{r_user} recieved {prev_amount} satoshis")
+                            for i, tx_in in enumerate(message.tx_ins):
+                                for tx_id in ids:
+                                    if tx_id[0] == tx_in.prev_tx.hex() and int(tx_id[1]) == tx_in.prev_index:
+                                        tx_set_flag(r_user, tx_id[0], '3')
                     except SyntaxError:
                         logging.info("recieved an invalid script")
             except RuntimeError:
@@ -100,56 +104,3 @@ def block_syncer():
 
         time.sleep(10)
 
-""" Part #1: Block Syncing """
-# KEY: keep all headers
-# KEY: first block hash on fork files is the sme as the mian chain
-"""
-start_block = WALLET_GENESIS
-
-when block is recieved:
-    if: block builds on main chain:
-        main += block
-    else: for fork in forks:
-        get_prev_hash()
-        if prev_hash == message.prev_hash:
-            # if no exsisting file for this fork, make a new one
-            fork += block
-
-    if the length of the forks is greater than the main chain lengths:
-        switch files
-"""
-
-### "*_utxos.csv" format:
-    # tx_id, index, amount, address, scriptPubKey, block_hash, confirmation_status 
-
-""" set all flags belonging to tx mined in the blocks that were reorged out as unconfirmed 
-    save these transactions as a dictionary 
-    search for the txs within the x new blocks see if any of the txs were confirmed: 
-    pop confirmed transactions from dictionary 
-    if dictionary isn't empty: 
-    notify the user that they may have been double-spent
-
-"""
-
-""" Part #2: UTXO Syncing """
-
-# KEY: don't delete utxos if you've "spent"
-# FLAGS:
-# 0 = unconfirmed unspent, 1 = confirmed unspent, 2 = unconfirmed spent, 3 = confirmed spent 
-
-# 0 when expecting change
-# 1 when we've recieved a utxo and have never spent it
-# 2 when we have spent a utxo and haven't recieved the transaction from the blockchain where we have spent it
-# 3 when we've spent it an have recieved confirmation that we've spent it
-
-"""
-when transaction is recieved:
-    if ouput is ours:
-        if on main chain:
-            add everything as usual
-        else:
-            do nothing, we'll get them in case of a reorg
-    if input is ours:
-        find tx in users file an mark that transaction as spent
-        
-"""

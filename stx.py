@@ -50,7 +50,18 @@ def get_all_utxos(username):
             utxos.pop(i)
     return utxos
 
+def get_user_addr(username):   
+    user_addr = []
+    with open(f"{username}.csv", 'r') as file:
+        r = csv.reader(file)
+        lines = list(r)
+        for line in lines:
+            user_addr.append(line[1])
+    return user_addr
+
+
 def multi_send(username):
+    all_addr = get_user_addr(username)
     num_r = input("Number of recipients: ")
     try:
         num_r = int(num_r)
@@ -64,7 +75,13 @@ def multi_send(username):
     total_amount = fee
     try:
         for i in range(num_r):
-            target_address = input(f"Recipient{i+1}: ")
+            same = True
+            while same:
+                target_address = input(f"Recipient{i+1}: ")
+                if target_address in all_addr:
+                    print("You can't send testnet Bitcoin to yourself")
+                else:
+                    same = False
             try:
                 target_h160 = decode_base58(target_address)
             except ValueError:

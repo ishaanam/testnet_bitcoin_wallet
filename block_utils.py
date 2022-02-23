@@ -210,6 +210,17 @@ def need_reorg():
             return forks[highest]
     return None
 
+def get_all_ids():
+    users = get_all_users()
+    ids = []
+    for user in users:
+        with open(f"{user}_utxos.csv", "r") as utxo_file:
+            r = csv.reader(utxo_file)
+            utxos = list(r)
+            for utxo in utxos:
+                ids.append([utxo[0], utxo[1]])
+    return ids
+
 # set flag 0
 def tx_set_new(user, tx_id, index, amount, address, scriptPubKey, block_hash):
     with open(f"{user}_utxos.csv", 'a', newline="") as utxo_file:
