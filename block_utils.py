@@ -246,12 +246,14 @@ def tx_set_confirmed(user, tx_id, index, amount, address, scriptPubKey, block_ha
         w.writerows(utxos)
 
 # set other flags(2, 3, sometimes 0) 
-def tx_set_flag(user, tx_id, flag):
+def tx_set_flag(user, tx_id, flag, index=None):
     with open(f"{user}_utxos.csv", 'r') as utxo_file:
         r = csv.reader(utxo_file)
         utxos = list(r)
         for i, utxo in enumerate(utxos):
-            if utxo[0] == tx_id:
+            if utxo[0] == tx_id and index != None and utxo[1] == index:
+                existing_index = i
+            elif utxo[0] == tx_id and index == None:
                 existing_index = i
     utxos[existing_index][-1] = flag 
     with open(f"{user}_utxos.csv", 'w') as utxo_file:
@@ -287,7 +289,7 @@ def input_parser(current_addr, node):
                     for i, tx_in in enumerate(message.tx_ins):
                         for tx_id in ids:
                             if tx_id[0] == tx_in.prev_tx.hex() and int(tx_id[1]) == tx_in.prev_index:
-                                tx_set_flag(tx_id[2], tx_id[0], '3')
+                                tx_set_flag(tx_id[2], tx_id[0], '3', tx_id[1])
         except SyntaxError:
             logging.info("recieved an invalid script")
 
