@@ -32,10 +32,9 @@ logging.basicConfig(filename='block.log', format='%(levelname)s:%(message)s', le
 def start_log():
     start_block = "0000000062043fb2e5091e43476e485ddc5d726339fd12bb010d5aeaf2be8206"
     start_height = 2135892 
-    try:
-        with open("block_log.csv", "w", newline="") as block_log:
-            w = csv.writer(block_log)
-            w.writerow((start_block, start_height))
+    with open("block_log.csv", "w", newline="") as block_log:
+        w = csv.writer(block_log)
+        w.writerow((start_block, start_height))
     return start_block
 
 def read_log(block_number):

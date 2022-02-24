@@ -43,12 +43,11 @@ def get_all_utxos(username):
     with open(f"{username}_utxos.csv", 'r') as user_file:
         r = csv.reader(user_file)
         utxos = list(r)
+    output = []
     for i, utxo in enumerate(utxos):
         if utxo[-1] == "1":
-            pass
-        else:
-            utxos.pop(i)
-    return utxos
+            output.append(utxo)
+    return output 
 
 def multi_send(username):
     num_r = input("Number of recipients: ")
@@ -112,6 +111,8 @@ def multi_send(username):
         for key in keys:
             if key[1] == utxo[3]:
                 my_wallets.append(key[0])
+        if used_amount >= (target_amount + fee):
+            break
 
     if used_amount > total_amount:
         change_address = make_address(username)
