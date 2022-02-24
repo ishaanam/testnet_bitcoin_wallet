@@ -30,12 +30,12 @@ except (ModuleNotFoundError, ImportError):
 logging.basicConfig(filename='block.log', format='%(levelname)s:%(message)s', level=logging.DEBUG)
 
 def start_log():
-    # block log format: block_hash, height
     start_block = "0000000062043fb2e5091e43476e485ddc5d726339fd12bb010d5aeaf2be8206"
     start_height = 2135892 
-    with open("block_log.csv", "w", newline="") as block_log:
-        w = csv.writer(block_log)
-        w.writerow((start_block, start_height))
+    try:
+        with open("block_log.csv", "w", newline="") as block_log:
+            w = csv.writer(block_log)
+            w.writerow((start_block, start_height))
     return start_block
 
 def read_log(block_number):
@@ -48,7 +48,10 @@ def read_log(block_number):
 def get_latest_block_hash():
     node = SimpleNode(HOST, testnet=True, logging=False)
     node.handshake()
-    start_block = bytes.fromhex(read_log(-2))
+    try:
+        start_block = bytes.fromhex(read_log(-2))
+    except FileNotFoundError:
+        start_block = start_log()
 
     getheaders = GetHeadersMessage(start_block=start_block)
     node.send(getheaders)

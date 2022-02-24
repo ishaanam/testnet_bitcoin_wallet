@@ -33,13 +33,9 @@ logging.basicConfig(filename='block.log', format='%(levelname)s:%(message)s', le
 def block_syncer():
     node = SimpleNode(HOST, testnet=True, logging=False)
     node.handshake()
-    #Actually "forever"
     while True:
         now_hash = get_latest_block_hash()
-        try:
-            then_hash = read_log(-1)
-        except FileNotFoundError:
-            then_hash = start_log()
+        then_hash = read_log(-1)
         current_addr = get_all_addr()
         bf = BloomFilter(size=30, function_count=5, tweak=1729)
         # when a new block is recieved:
@@ -68,7 +64,6 @@ def block_syncer():
                 if reorg_file != None:
                     reorg(reorg_file)
             node.send(getdata)
-            # SET SIGNAL ALARM
             signal.signal(signal.SIGALRM, handler)
             signal.alarm(40)
             try:
