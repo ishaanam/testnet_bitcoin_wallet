@@ -71,10 +71,10 @@ def send_to_storage():
         script_sig= Script([sig, sec])
         tx_obj.tx_ins[i].script_sig = script_sig
 
-        print("hex serialization: ")
-        print(tx_obj.serialize().hex())
-        print("transaction id")
-        print(tx_obj.id())
+    print("hex serialization: ")
+    print(tx_obj.serialize().hex())
+    print("transaction id")
+    print(tx_obj.id())
 
     node = SimpleNode(HOST, testnet=True, logging=False)
     node.handshake()
