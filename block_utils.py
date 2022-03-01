@@ -75,6 +75,28 @@ def is_synched():
         return True
     return False
 
+def gap_exceeded(username):
+    with open(f"{username}.csv", "r") as address_file:
+        r = csv.reader(address_file)
+        addresses = []
+        for address in list(r):
+            addresses.append(address[1])
+    with open(f"{username}_utxos.csv", "r") as utxo_file:
+        r = csv.reader(utxo_file)
+        used = []
+        for utxo in list(r):
+            used.append(utxo[3])
+        if used == []:
+            return True, []
+    total = len(addresses)
+    latest = addresses.index(used[-1])
+    if (total - latest < 20):
+        return True, []
+    for addr in used:
+        addresses.remove(addr)
+    oldest_unused_addr = addresses[0]
+    return False, oldest_unused_addr 
+
 def get_height(file, block_hash):
     with open(file, "r") as block_file:
         r = csv.reader(block_file)
