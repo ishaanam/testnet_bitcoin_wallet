@@ -2,7 +2,7 @@ from multiprocessing import Process
 
 from jbok import get_tpub, get_tprv
 from user_manager import make_user, user_login, has_login
-from sent_to_storage import send_to_storage, get_all_balance
+from send_to_storage import send_to_storage, get_all_balance
 from stx import get_balance, multi_send
 from rtx import recieve_tx
 from block_logger import block_syncer
