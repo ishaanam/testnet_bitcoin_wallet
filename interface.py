@@ -6,22 +6,28 @@ from sent_to_storage import send_to_storage, get_all_balance
 from stx import get_balance, multi_send
 from rtx import recieve_tx
 from block_logger import block_syncer
+from block_utils import is_synched
 
 def run_wallet():
     print("NOTE: this wallet only operates on the testnet, enter 'sign out' to log into a different account and 'quit' to exit.")
 
     username = has_login()
-    print("I can: calculate your current balance[cb], send transactions[stx], recieve transactions[rtx], and get your extended public key [tpub] or your extended private key[tprv]")
+    print("I can: calculate your current balance[cb], send transactions[stx], recieve transactions[rtx], check if your wallet is fully synchronized with the blockchain[status], and get your extended public key [tpub] or your extended private key[tprv]")
 
     active = True
     while active:
         print("What can I help you with?")
         option = input("You: ")
         if option == "stx":
-            multi_send(username)
+            if is_synched():
+                multi_send(username)
+            else:
+                print("Your wallet is currently in the process of synching with the blockchain. Please try again later.")
         elif option == "rtx":
             recieve_tx(username)
         elif option == "cb":
+            if is_synched() == False:
+                print("Please note that your wallet is still in the process of synching with the blockchain.")
             balance = get_balance(username, unconfirmed=True)
             print(f"Your current balance is: {balance[0]} Satoshis")
             if balance[1] != 0:
@@ -35,10 +41,19 @@ def run_wallet():
         elif option == "tprv":
             print(get_tprv(username))
         elif option == "storage":
+            #CHECK
             if get_all_balance() == 0:
                 print("You have 0 testnet bitcoin")
             else:
-                send_to_storage() 
+                if is_synched():
+                    send_to_storage()
+                else:
+                    print("Your wallet is currently in the process of synching with the blockchain. Please try again later.")
+        elif option == "status":
+            if is_synched():
+                print("The wallet is fully synchronized with the blockchain")
+            else:
+                print("The wallet is in the process of synchronizing with the blockchain.")
 
 if __name__ == '__main__':
     
