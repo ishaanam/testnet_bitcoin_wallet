@@ -1,19 +1,45 @@
 from mnemonic import Mnemonic
 from ProgrammingBitcoin.ecc import S256Point, PrivateKey, FieldElement, S256Field
 from ProgrammingBitcoin.helper import hash160, encode_base58, encode_base58_checksum, little_endian_to_int, hash256, decode_base58 
+from block_utils import read_log, get_height 
 import hashlib
 import csv
 import hmac
 import getpass
 import unittest 
 import base58
+import math
 
 num = 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364141
+
+def get_birthday():
+    # storing the wallet birthday in this manner will work for around 5.6 years before we run out of words
+    start_block = 2164464
+    block = read_log(-1)
+    h = get_height('block_log.csv', block)
+    h -= start_block
+    n = math.floor(h/144) 
+    with open("english.txt", "r") as words:
+        for i, line in enumerate(words):
+            if i == n:
+                birthday_word = line
+                break
+    if birthday_word:
+        return birthday_word[:-1]
 
 def new_mnemonic():
     mnemo = Mnemonic('english')
     words = mnemo.generate(strength=128)
-    print(words)
+    # uncommented once segwit is implemented in this wallet
+    # version = input("Would you like legacy or segwit addresses?[legacy/segwit]: ")
+    # if version == "segwit":
+        # version_word = "ability"
+    # else:
+        # version_word = "abandon"
+    version_word = "abandon"
+    new_words = words +  f" {version_word}" 
+    new_words += f" {get_birthday()}" 
+    print(new_words)
     passphrase = getpass.getpass(prompt="Passphrase(if none just enter): ")
     seed = mnemo.to_seed(words, passphrase=passphrase)
     return seed

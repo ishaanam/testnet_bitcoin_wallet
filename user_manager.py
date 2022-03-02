@@ -34,8 +34,11 @@ def make_user():
     if recover == "y":
         choice = input("Would you like to import a tprv or enter your mnemonic code words?[tprv/words]: ")
         if choice == "words":
-            words = input("Please enter your words seperated by spaces: ")
+            words = input("Please enter your first 12 words seperated by spaces: ")
             tprv = HD_Key.recover_wallet(words)
+            new_words = input("Please enter your first 2 words seperated by spaces: ")
+            new_words = new_words.split()
+            # call recover_funds(user, new_words) one finished
         else:
             tprv = input("tprv: ")
     else:
