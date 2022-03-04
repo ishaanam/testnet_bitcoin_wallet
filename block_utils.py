@@ -68,6 +68,21 @@ def get_latest_block_hash():
         last_block = block.hash()
     return last_block.hex()
 
+def get_known_height():
+    with open("block_log.csv", "r") as block_log:
+        r = csv.reader(block_log)
+        blocks = list(r)
+    return(blocks[-1][1])
+
+def get_hash_from_height(height):
+    with open("block_log.csv", "r") as blocks:
+        r = csv.reader(blocks)
+        blocks = list(r)
+        for block in blocks:
+            if int(block[1]) == height:
+                return block[0]
+    return None 
+
 def is_synched():
     now_hash = get_latest_block_hash()
     then_hash = read_log(-1)
