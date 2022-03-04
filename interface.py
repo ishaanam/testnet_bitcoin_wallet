@@ -6,13 +6,14 @@ from send_to_storage import send_to_storage, get_all_balance
 from stx import get_balance, multi_send
 from rtx import recieve_tx
 from block_logger import block_syncer
-from block_utils import is_synched
+from block_utils import is_synched, get_known_height 
 
-def run_wallet():
+def run_wallet(p):
     print("NOTE: this wallet only operates on the testnet, enter 'sign out' to log into a different account and 'quit' to exit.")
 
     username = has_login()
     print("I can: calculate your current balance[cb], send transactions[stx], recieve transactions[rtx], check if your wallet is fully synchronized with the blockchain[status], and get your extended public key [tpub] or your extended private key[tprv]")
+    p.start()
 
     active = True
     while active:
@@ -41,7 +42,6 @@ def run_wallet():
         elif option == "tprv":
             print(get_tprv(username))
         elif option == "storage":
-            #CHECK
             if get_all_balance() == 0:
                 print("You have 0 testnet bitcoin")
             else:
@@ -54,10 +54,10 @@ def run_wallet():
                 print("The wallet is fully synchronized with the blockchain")
             else:
                 print("The wallet is in the process of synchronizing with the blockchain.")
+            print(f"The latest known block height is: {get_known_height()}")
 
 if __name__ == '__main__':
     
     p = Process(target=block_syncer)
-    p.start()
-    run_wallet()
+    run_wallet(p)
     p.terminate()
