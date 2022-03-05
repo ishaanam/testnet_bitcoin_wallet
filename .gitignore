@@ -5,6 +5,5 @@ __pycache__/
 network_settings.py
 segwit_pb/
 swtx.py
-recover_funds.py
 wallet.txt
 *.swp

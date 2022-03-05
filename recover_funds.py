@@ -136,7 +136,7 @@ def recover_batch(r_user, node, current_addr, height):
                 except SyntaxError:
                     pass
         except RuntimeError as e:
-            print(e)
+            pass 
         
 def recover_funds(username, last_words=None):
     if last_words == None:
