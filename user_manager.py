@@ -3,6 +3,7 @@ import getpass
 from hashlib import sha256
 from block_utils import get_all_users
 from hd import HD_Key 
+from recover_funds import recover_funds
 
 def save_pass(password):
     password = sha256(password.encode())
@@ -32,13 +33,15 @@ def make_user():
     pass_hash = save_pass(password)
     recover = input("Would you like to recover a testnet wallet?[y/n]: ")
     if recover == "y":
+        new_words = None
         choice = input("Would you like to import a tprv or enter your mnemonic code words?[tprv/words]: ")
         if choice == "words":
             words = input("Please enter your first 12 words seperated by spaces: ")
             tprv = HD_Key.recover_wallet(words)
-            new_words = input("Please enter your first 2 words seperated by spaces: ")
-            new_words = new_words.split()
-            # call recover_funds(user, new_words) one finished
+            new_words = input("Please enter your remaining 2 words seperated by spaces [If none juse enter]: ")
+            if new_words:
+                new_words = new_words.split()
+                recover_funds(username, new_words)
         else:
             tprv = input("tprv: ")
     else:
@@ -59,6 +62,8 @@ def make_user():
 
     with open(f'{username}_utxos.csv', 'w', newline="") as utxo_file:
         writer = csv.writer(utxo_file)
+
+    recover_funds(username, new_words)
 
     return username
 
