@@ -72,7 +72,13 @@ def get_known_height():
     with open("block_log.csv", "r") as block_log:
         r = csv.reader(block_log)
         blocks = list(r)
-    return(blocks[-1][1])
+    return blocks[-1][1]
+
+def get_known_hash():
+    with open('block_log.csv', 'r') as block_log:
+        r = csv.reader(block_log)
+        blocks = list(r)
+    return blocks[-1][0]
 
 def get_hash_from_height(height):
     with open("block_log.csv", "r") as blocks:
@@ -81,7 +87,6 @@ def get_hash_from_height(height):
         for block in blocks:
             if int(block[1]) == height:
                 return block[0]
-    return None 
 
 def is_synched():
     now_hash = get_latest_block_hash()
@@ -237,7 +242,12 @@ def all_hashes():
             lines = list(r)
             for line in lines:
                 blocks.append(line[0])
+    return blocks
 
+def all_main_blocks():
+    with open('block_log.csv', 'r') as block_file:
+        r = csv.reader(block_file)
+        blocks = list(r)
     return blocks
 
 def need_reorg():
