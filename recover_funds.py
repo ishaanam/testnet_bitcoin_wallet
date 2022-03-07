@@ -37,20 +37,6 @@ except (ModuleNotFoundError, ImportError):
         net_file.write('HOST = "testnet.programmingbitcoin.com"')
         HOST = 'testnet.programmingbitcoin.com'
 
-def get_local_headers():
-    output = []
-    with open('block_log.csv', 'r') as block_log:
-        r = csv.reader(block_log)
-        blocks = list(r)
-        headers = []
-        for block in blocks:
-            headers.append(block[0])
-        batch_num = int(ceil(len(blocks)/2000)) 
-    split_arrays = array_split(array(headers), batch_num)
-    for a in split_arrays:
-        output.append(a.tolist())
-    return output
-
 def get_start_blocks(height):
     latest_height = get_known_height() 
     start_blocks = []
