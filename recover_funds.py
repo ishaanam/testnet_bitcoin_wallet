@@ -85,6 +85,23 @@ def generate_batch(key, index):
         index += 1
     return current_addr, index 
 
+def gap_exceeded(username, current_addr):
+    with open(f"{username}_utxos.csv", 'r') as utxos:
+        r = csv.reader(utxos)
+        lines = list(r)
+    latest_addr = lines[-1][3]
+    for i, line in enumerate(current_addr):
+        if line[1] == latest_addr:
+            break
+    print(i)
+    print(39 - i)
+    print(latest_addr)
+    if (39 - i)> 20:
+        print("returning False")
+        return False, latest_addr
+    else:
+        return True, ""
+
 def recover_batch(r_user, node, current_addr, height):
     utxos = []
     start_blocks = get_start_blocks(height)
@@ -136,7 +153,10 @@ def recover_batch(r_user, node, current_addr, height):
                 except SyntaxError:
                     pass
         except RuntimeError as e:
-            pass 
+            pass
+        incomplete, latest_addr = gap_exceeded(r_user, current_addr)
+        print(f"Returning {incomplete}")
+        return incomplete, latest_addr 
         
 def recover_funds(username, last_words=None):
     if last_words == None:
@@ -149,6 +169,7 @@ def recover_funds(username, last_words=None):
             tprv = user[2]
     key = HD_Key.parse_priv(tprv) 
     index = 0
+    all_addr = []
     
     if last_words:
         birthday_word = last_words[1]
@@ -156,15 +177,21 @@ def recover_funds(username, last_words=None):
         if birthday == None:
             print("You must let your wallet sync further in order to be able to recover all addresses, please try again once your wallet has fully synchronized with the blockchain. (Use 'status' in order to check when the wallet is synced)")
         if last_words[0] == "abandon":
-            incomplete = True
             # generate and check for legacy addresses 
+            incomplete = True
             node = SimpleNode(HOST, testnet=True, logging=False)
             node.handshake()
             while incomplete:
-                current_addr, index = generate_batch(key, index) 
-                recover_batch(username, node, current_addr, birthday_height)
-                incomplete = False
-
+                current_addr, index = generate_batch(key, index)
+                all_addr += current_addr
+                incomplete, last_addr = recover_batch(username, node, current_addr, birthday_height)
+            for i, addr in enumerate(all_addr):
+                if addr[1] == last_addr:
+                    break
+            all_addr = all_addr[:i+5]
+            with open(f"{username}.csv", 'w', newline="") as addr_file:
+                w = csv.writer(addr_file)
+                w.writerows(all_addr)
         if last_words[0] == "ability":
             # generate and check for segwit addresses
             pass
