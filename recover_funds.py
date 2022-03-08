@@ -75,18 +75,16 @@ def gap_exceeded(username, current_addr):
     with open(f"{username}_utxos.csv", 'r') as utxos:
         r = csv.reader(utxos)
         lines = list(r)
-    latest_addr = lines[-1][3]
-    for i, line in enumerate(current_addr):
-        if line[1] == latest_addr:
-            break
-    print(i)
-    print(39 - i)
-    print(latest_addr)
-    if (39 - i)> 20:
-        print("returning False")
-        return False, latest_addr
-    else:
-        return True, ""
+    if lines != []:
+        latest_addr = lines[-1][3]
+        for i, line in enumerate(current_addr):
+            if line[1] == latest_addr:
+                break
+        if (39 - i)> 20:
+            return False, latest_addr
+        else:
+            return True, ""
+    return True, ""
 
 def recover_batch(r_user, node, current_addr, height):
     utxos = []
@@ -141,7 +139,6 @@ def recover_batch(r_user, node, current_addr, height):
         except RuntimeError as e:
             pass
         incomplete, latest_addr = gap_exceeded(r_user, current_addr)
-        print(f"Returning {incomplete}")
         return incomplete, latest_addr 
         
 def recover_funds(username, last_words=None):
