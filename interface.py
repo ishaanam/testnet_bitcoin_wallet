@@ -12,7 +12,7 @@ def run_wallet(p):
     print("NOTE: this wallet only operates on the testnet, enter 'sign out' to log into a different account and 'quit' to exit.")
 
     username = has_login()
-    print("I can: calculate your current balance[cb], send transactions[stx], recieve transactions[rtx], check if your wallet is fully synchronized with the blockchain[status], and get your extended public key [tpub] or your extended private key[tprv]")
+    print("I can: calculate your current balance[cb], send transactions[stx], recieve transactions[rtx], check if your wallet is fully synchronized with the blockchain[status], change the full node you get information from[change node] and get your extended public key [tpub] or your extended private key[tprv]")
     p.start()
 
     active = True
@@ -41,6 +41,11 @@ def run_wallet(p):
             print(get_tpub(username))
         elif option == "tprv":
             print(get_tprv(username))
+        elif option == "change node":
+            new_host = input("New node: ")
+            with open("network_settings.py", 'w') as net_file:
+                net_file.write(f'HOST = "{new_host}"')
+            print("Please restart your wallet for these changes to take full affect everywhere")
         elif option == "storage":
             if get_all_balance() == 0:
                 print("You have 0 testnet bitcoin")
