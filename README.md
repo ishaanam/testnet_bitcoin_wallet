@@ -6,5 +6,5 @@ This wallet utilizes the Bitcoin library from [Programming Bitcoin](https://www.
 The wallet recieves blocks and transactions in the background whenever the wallet is being used. Run interface.py to start the wallet.Dependencies: requests, base58, and mnemonic (all these can be installed using pip).
 
 ### Connecting to A Full Node
-The full node which your wallet is connecting to can be modified by changing the HOST variable in network_settings.py.
+You can modify the full node you connect to by using the "change node" command on the wallet and providing it with the full node you would like to connect to.
 Note: "peerbloomfilters=1" must be in the bitcoin.conf file of the full node you try to connect to.
