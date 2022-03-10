@@ -63,8 +63,6 @@ def make_user():
     with open(f'{username}_utxos.csv', 'w', newline="") as utxo_file:
         writer = csv.writer(utxo_file)
 
-    recover_funds(username, new_words)
-
     return username
 
 def user_login():

@@ -39,10 +39,13 @@ def start_log():
 
 def read_log(block_number):
     start_block = "0000000062043fb2e5091e43476e485ddc5d726339fd12bb010d5aeaf2be8206"
-    with open('block_log.csv', 'r') as log_file:
-        r = csv.reader(log_file)
-        lines = list(r)
-        return lines[block_number][0]
+    try:
+        with open('block_log.csv', 'r') as log_file:
+            r = csv.reader(log_file)
+            lines = list(r)
+            return lines[block_number][0]
+    except FileNotFoundError:
+        start_log()
 
 def get_latest_block_hash():
     node = SimpleNode(HOST, testnet=True, logging=False)
