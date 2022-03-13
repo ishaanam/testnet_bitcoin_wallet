@@ -32,6 +32,7 @@ def send_to_storage():
             target_script = p2pkh_script(decode_base58(target_address))
         except ValueError:
             print("Invalid address")
+            return
     
     fee = 400
     target_amount = get_all_balance() - fee 

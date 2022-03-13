@@ -22,21 +22,21 @@ def run_wallet(p):
         except RuntimeError:
             pass
     username = has_login()
-    print("I can: calculate your current balance[cb], send transactions[stx], recieve transactions[rtx], check if your wallet is fully synchronized with the blockchain[status], change the full node you get information from[change node] and get your extended public key [tpub] or your extended private key[tprv]")
+    print("I can: calculate your current balance[balance], send transactions[send], recieve transactions[recieve], check if your wallet is fully synchronized with the blockchain[status], send all of your testnet bitcoin in all accounts to a specified address[storage], change the full node you get information from[change node] and get your extended public key [tpub] or your extended private key[tprv]")
     p.start()
 
     active = True
     while active:
         print("What can I help you with?")
         option = input("You: ")
-        if option == "stx":
+        if option == "send":
             if is_synched():
                 multi_send(username)
             else:
                 print("Your wallet is currently in the process of synching with the blockchain. Please try again later.")
-        elif option == "rtx":
+        elif option == "recieve":
             recieve_tx(username)
-        elif option == "cb":
+        elif option == "balance":
             if is_synched() == False:
                 print("Please note that your wallet is still in the process of synching with the blockchain.")
             balance = get_balance(username, unconfirmed=True)
