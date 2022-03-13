@@ -23,9 +23,17 @@ def get_all_balance():
         
 
 def send_to_storage():
-    target_address = "mi9oPqzbuww3dRmLZa2rDAvP27S6312Jwt"
+    print("Please provide exactly one address to send the funds to. If you don't care where the testnet Bitcoin goes, enter 'default'")
+    target_address = input("Address: ")
+    if target_address == "default":
+        target_address = "mi9oPqzbuww3dRmLZa2rDAvP27S6312Jwt"
+    else:
+        try:
+            target_script = p2pkh_script(decode_base58(target_address))
+        except ValueError:
+            print("Invalid address")
+    
     fee = 400
-    target_script = p2pkh_script(decode_base58(target_address))
     target_amount = get_all_balance() - fee 
     tx_out = TxOut(amount=target_amount,script_pubkey=target_script)
     my_tx_ins = []
