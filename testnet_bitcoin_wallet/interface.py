@@ -1,3 +1,5 @@
+import signal
+from os.path import exists
 from multiprocessing import Process
 
 from jbok import get_tpub, get_tprv
@@ -6,11 +8,19 @@ from send_to_storage import send_to_storage, get_all_balance
 from stx import get_balance, multi_send
 from rtx import recieve_tx
 from block_logger import block_syncer
-from block_utils import is_synched, get_known_height 
+from block_utils import is_synched, get_known_height, handler
 
 def run_wallet(p):
     print("NOTE: this wallet only operates on the testnet, enter 'sign out' to log into a different account and 'quit' to exit.")
 
+    if not exists("block_log.csv"):
+        print("Wallet will take a few seconds to start up ...")
+        signal.signal(signal.SIGALRM, handler)
+        signal.alarm(10)
+        try:
+            block_syncer()
+        except RuntimeError:
+            pass
     username = has_login()
     print("I can: calculate your current balance[cb], send transactions[stx], recieve transactions[rtx], check if your wallet is fully synchronized with the blockchain[status], change the full node you get information from[change node] and get your extended public key [tpub] or your extended private key[tprv]")
     p.start()

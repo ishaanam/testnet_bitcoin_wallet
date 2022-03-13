@@ -30,8 +30,8 @@ except (ModuleNotFoundError, ImportError):
 logging.basicConfig(filename='block.log', format='%(levelname)s:%(message)s', level=logging.DEBUG)
 
 def start_log():
-    start_block = "0000000062043fb2e5091e43476e485ddc5d726339fd12bb010d5aeaf2be8206"
-    start_height = 2135892 
+    start_block = "000000000000012ad603ddcc526791f6b2046a887999a284d60c44599536fced"
+    start_height =  2164464 
     with open("block_log.csv", "w", newline="") as block_log:
         w = csv.writer(block_log)
         w.writerow((start_block, start_height))
@@ -45,7 +45,7 @@ def read_log(block_number):
             lines = list(r)
             return lines[block_number][0]
     except FileNotFoundError:
-        start_log()
+        return start_log()
 
 def get_latest_block_hash():
     node = SimpleNode(HOST, testnet=True, logging=False)
@@ -151,11 +151,14 @@ def find_user(addr):
 
 def get_all_users():
     users = []
-    with open('users.csv', 'r') as user_file:
-        r = csv.reader(user_file)
-        lines = list(r)
-        for line in lines:
-            users.append(line[0])
+    try:
+        with open('users.csv', 'r') as user_file:
+            r = csv.reader(user_file)
+            lines = list(r)
+            for line in lines:
+                users.append(line[0])
+    except FileNotFoundError:
+        pass
     return users
 
 def get_all_addr():
