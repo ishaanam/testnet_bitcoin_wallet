@@ -1,6 +1,4 @@
-from secrets import token_hex
 import csv
-from ProgrammingBitcoin.helper import little_endian_to_int, hash256
 from ProgrammingBitcoin.ecc import PrivateKey
 from hd import HD_Key
 
@@ -14,7 +12,7 @@ def get_addr(seed):
 	return(p.address(testnet=True))
 
 def make_address(username):
-    with open(f'users.csv', 'r') as user_file:
+    with open('users.csv', 'r') as user_file:
         r = csv.reader(user_file)
         lines = list(r)
         for i, line in enumerate(lines):
@@ -29,13 +27,13 @@ def make_address(username):
         writer = csv.writer(a_file)
         writer.writerow((ck.k, address))
     
-    with open(f'users.csv', 'w') as user_file:
+    with open('users.csv', 'w') as user_file:
         writer = csv.writer(user_file)
         writer.writerows(lines)
     return address
 
 def get_tprv(username):
-    with open(f'users.csv', 'r') as user_file:
+    with open('users.csv', 'r') as user_file:
         r = csv.reader(user_file)
         lines = list(r)
         for line in lines:

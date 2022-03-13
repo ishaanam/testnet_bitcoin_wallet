@@ -1,13 +1,10 @@
-from ProgrammingBitcoin.ecc import PrivateKey
-from ProgrammingBitcoin.helper import hash256, little_endian_to_int, encode_varint, read_varint, decode_base58, SIGHASH_ALL
+from ProgrammingBitcoin.helper import decode_base58, SIGHASH_ALL
 from ProgrammingBitcoin.script import p2pkh_script, Script 
 from ProgrammingBitcoin.tx import Tx, TxIn, TxOut
 from ProgrammingBitcoin.network import SimpleNode
-from ProgrammingBitcoin.op import OP_CODE_FUNCTIONS
 from stx import get_balance, get_all_utxos, make_p2pkh_script
 from block_utils import get_all_users
 from jbok import get_pkobj
-from network_settings import HOST
 import csv
 
 try:

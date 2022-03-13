@@ -1,17 +1,13 @@
 from ProgrammingBitcoin.block import Block
-from ProgrammingBitcoin.ecc import PrivateKey
-from ProgrammingBitcoin.helper import hash256, little_endian_to_int, encode_varint, read_varint, decode_base58, SIGHASH_ALL
+from ProgrammingBitcoin.helper import decode_base58
 from ProgrammingBitcoin.network import (
     GetDataMessage,
     GetHeadersMessage,
     HeadersMessage,
-    NetworkEnvelope,
     SimpleNode,
-    TX_DATA_TYPE,
     FILTERED_BLOCK_DATA_TYPE,
 )
-from ProgrammingBitcoin.script import p2pkh_script, Script
-from ProgrammingBitcoin.tx import Tx, TxIn, TxOut
+from ProgrammingBitcoin.tx import Tx
 from ProgrammingBitcoin.bloomfilter import BloomFilter
 from ProgrammingBitcoin.merkleblock import MerkleBlock
 

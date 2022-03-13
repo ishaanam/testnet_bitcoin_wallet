@@ -3,7 +3,7 @@ from os.path import exists
 from multiprocessing import Process
 
 from jbok import get_tpub, get_tprv
-from user_manager import make_user, user_login, has_login
+from user_manager import has_login
 from send_to_storage import send_to_storage, get_all_balance
 from stx import get_balance, multi_send
 from rtx import recieve_tx

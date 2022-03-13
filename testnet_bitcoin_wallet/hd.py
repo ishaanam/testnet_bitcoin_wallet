@@ -1,9 +1,8 @@
 from mnemonic import Mnemonic
-from ProgrammingBitcoin.ecc import S256Point, PrivateKey, FieldElement, S256Field
-from ProgrammingBitcoin.helper import hash160, encode_base58, encode_base58_checksum, little_endian_to_int, hash256, decode_base58 
+from ProgrammingBitcoin.ecc import PrivateKey
+from ProgrammingBitcoin.helper import hash160, encode_base58_checksum
 from block_utils import read_log, get_height 
 import hashlib
-import csv
 import hmac
 import getpass
 import base58
