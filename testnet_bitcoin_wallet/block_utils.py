@@ -15,6 +15,7 @@ import csv
 import logging
 import signal
 from os.path import exists
+import socket
 
 try:
     from network_settings import HOST
@@ -32,6 +33,14 @@ def start_log():
         w = csv.writer(block_log)
         w.writerow((start_block, start_height))
     return start_block
+
+def is_valid_node(host):
+    try:
+        node = SimpleNode(host, testnet=True, logging=False)
+        return True
+    except (socket.gaierror, TimeoutError):
+        print("That appears to be an invalid node please try another node or keep using the previous node.")
+        return False
 
 def read_log(block_number):
     start_block = "0000000062043fb2e5091e43476e485ddc5d726339fd12bb010d5aeaf2be8206"

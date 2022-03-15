@@ -8,7 +8,7 @@ from send_to_storage import send_to_storage, get_all_balance
 from stx import get_balance, multi_send
 from rtx import recieve_tx
 from block_logger import block_syncer
-from block_utils import is_synched, get_known_height, handler
+from block_utils import is_synched, get_known_height, handler, is_valid_node
 
 def run_wallet(p):
     print("NOTE: this wallet only operates on the testnet, enter 'sign out' to log into a different account and 'quit' to exit.")
@@ -52,10 +52,12 @@ def run_wallet(p):
         elif option == "tprv":
             print(get_tprv(username))
         elif option == "change node":
+            print("Note: confirmation may take ~1 minute")
             new_host = input("New node: ")
-            with open("network_settings.py", 'w') as net_file:
-                net_file.write(f'HOST = "{new_host}"')
-            print("Please restart your wallet for these changes to take full affect everywhere")
+            if is_valid_node(new_host):
+                with open("network_settings.py", 'w') as net_file:
+                    net_file.write(f'HOST = "{new_host}"')
+                print("Please restart your wallet for these changes to take full affect everywhere")
         elif option == "storage":
             if get_all_balance() == 0:
                 print("You have 0 testnet bitcoin")
