@@ -74,7 +74,12 @@ def run_wallet(p):
             print(f"The latest known block height is: {get_known_height()}")
 
 if __name__ == '__main__':
-    
     p = Process(target=block_syncer)
-    run_wallet(p)
-    p.terminate()
+    try:
+        run_wallet(p)
+    except KeyboardInterrupt:
+        pass
+        try:
+            p.terminate()
+        except AttributeError:
+            pass
