@@ -7,6 +7,7 @@ from ProgrammingBitcoin.script import p2pkh_script, Script
 from ProgrammingBitcoin.tx import Tx, TxIn, TxOut
 from ProgrammingBitcoin.network import SimpleNode
 from ProgrammingBitcoin.op import OP_CODE_FUNCTIONS
+
 from jbok import make_address, get_pkobj
 from block_utils import tx_set_flag, tx_set_new
 

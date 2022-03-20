@@ -1,3 +1,9 @@
+from math import ceil
+import csv
+import time
+import signal
+from numpy import array, array_split
+
 from ProgrammingBitcoin.network import (
     GetDataMessage,
     GetHeadersMessage,
@@ -7,10 +13,6 @@ from ProgrammingBitcoin.network import (
     TX_DATA_TYPE,
     FILTERED_BLOCK_DATA_TYPE,
 )
-
-from hd import HD_Key
-from jbok import get_addr
-
 from ProgrammingBitcoin.block import Block 
 from ProgrammingBitcoin.bloomfilter import BloomFilter 
 from ProgrammingBitcoin.ecc import PrivateKey
@@ -20,12 +22,9 @@ from ProgrammingBitcoin.script import p2pkh_script, Script
 from ProgrammingBitcoin.tx import Tx, TxIn, TxOut
 
 from block_utils import *
+from hd import HD_Key
+from jbok import get_addr
 
-from math import ceil
-import csv
-import time
-import signal
-from numpy import array, array_split
 
 TESTNET_GENESIS_BLOCK = bytes.fromhex("000000000933ea01ad0ee984209779baaec3ced90fa3f408719526f8d77f4943")
 WALLET_START_BLOCK = bytes.fromhex("0000000062043fb2e5091e43476e485ddc5d726339fd12bb010d5aeaf2be8206")
@@ -37,6 +36,7 @@ except (ModuleNotFoundError, ImportError):
         net_file.write('HOST = "testnet.programmingbitcoin.com"')
         HOST = 'testnet.programmingbitcoin.com'
 
+# get start blocks of every 2000 blocks
 def get_start_blocks(height):
     latest_height = get_known_height() 
     start_blocks = []
@@ -52,6 +52,7 @@ def get_start_blocks(height):
             start_blocks.append(block[0])
     return start_blocks
 
+# get the corresponding birthday hash given the birthday word
 def get_birthday_hash(word):
     start_block = 2164464
     with open("english.txt", 'r') as words:
@@ -62,6 +63,7 @@ def get_birthday_hash(word):
     block_hash = get_hash_from_height(h)
     return block_hash, h
 
+# generate a batch of addresses to look for funds 
 def generate_batch(key, index):
     current_addr = []
     for _ in range(40):
@@ -86,6 +88,7 @@ def gap_exceeded(username, current_addr):
             return True, ""
     return True, ""
 
+# fully recover a batch of addresses
 def recover_batch(r_user, node, current_addr, height):
     utxos = []
     start_blocks = get_start_blocks(height)
