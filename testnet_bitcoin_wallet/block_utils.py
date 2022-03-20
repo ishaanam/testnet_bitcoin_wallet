@@ -1,3 +1,9 @@
+import csv
+import logging
+import signal
+from os.path import exists
+import socket
+
 from ProgrammingBitcoin.block import Block
 from ProgrammingBitcoin.helper import decode_base58
 from ProgrammingBitcoin.network import (
@@ -11,12 +17,6 @@ from ProgrammingBitcoin.tx import Tx
 from ProgrammingBitcoin.bloomfilter import BloomFilter
 from ProgrammingBitcoin.merkleblock import MerkleBlock
 
-import csv
-import logging
-import signal
-from os.path import exists
-import socket
-
 try:
     from network_settings import HOST
 except (ModuleNotFoundError, ImportError):
@@ -26,14 +26,17 @@ except (ModuleNotFoundError, ImportError):
 
 logging.basicConfig(filename='block.log', format='%(levelname)s:%(message)s', level=logging.DEBUG)
 
+# If block_log.csv file doesn't exist, this function will create one
 def start_log():
     start_block = "000000000000012ad603ddcc526791f6b2046a887999a284d60c44599536fced"
     start_height =  2164464 
+    next_block = "0000000000006421447d155fc4007170cab0d98a06448dbaf74435be86082a8e"
+    next_height =2164465
     with open("block_log.csv", "w", newline="") as block_log:
         w = csv.writer(block_log)
-        w.writerow((start_block, start_height))
-    return start_block
+        w.writerows([(start_block, start_height), (next_block, next_height)])
 
+# ensures that a new node is valid before updating network_settings.py
 def is_valid_node(host):
     try:
         node = SimpleNode(host, testnet=True, logging=False)
@@ -42,39 +45,26 @@ def is_valid_node(host):
         print("That appears to be an invalid node please try another node or keep using the previous node.")
         return False
 
+# reads from block_log.csv and returns the specified block hash
 def read_log(block_number):
-    start_block = "0000000062043fb2e5091e43476e485ddc5d726339fd12bb010d5aeaf2be8206"
-    try:
-        with open('block_log.csv', 'r') as log_file:
-            r = csv.reader(log_file)
-            lines = list(r)
-            return lines[block_number][0]
-    except FileNotFoundError:
-        return start_log()
+    with open('block_log.csv', 'r') as log_file:
+        r = csv.reader(log_file)
+        lines = list(r)
+        return lines[block_number][0]
 
+# get the latest block hash which the node we've connected to knows about
 def get_latest_block_hash():
     node = SimpleNode(HOST, testnet=True, logging=False)
     node.handshake()
-    try:
-        start_block = bytes.fromhex(read_log(-2))
-    except FileNotFoundError:
-        start_block = start_log()
+    start_block = bytes.fromhex(read_log(-2))
 
     getheaders = GetHeadersMessage(start_block=start_block)
     node.send(getheaders)
 
     headers = node.wait_for(HeadersMessage)
     last_block = None 
-    getdata = GetDataMessage()
-
-    for block in headers.blocks:
-        if not block.check_pow():
-            raise RuntimeError('pow is invalid')
-        if last_block is not None and block.prev_block != last_block:
-            raise RuntimeError('chain broken')
-        getdata.add_data(FILTERED_BLOCK_DATA_TYPE, block.hash())
-        last_block = block.hash()
-    return last_block.hex()
+    
+    return headers.blocks[-1].hash().hex()
 
 def get_known_height():
     with open("block_log.csv", "r") as block_log:
@@ -96,6 +86,7 @@ def get_hash_from_height(height):
             if int(block[1]) == height:
                 return block[0]
 
+# checks if latest block hash from node is the same as the most recent one in block_log.csv
 def is_synched():
     now_hash = get_latest_block_hash()
     then_hash = read_log(-1)
@@ -103,6 +94,7 @@ def is_synched():
         return True
     return False
 
+# check if the address gap limit has been exceeded
 def gap_exceeded(username):
     with open(f"{username}.csv", "r") as address_file:
         r = csv.reader(address_file)
@@ -127,6 +119,7 @@ def gap_exceeded(username):
     else:
         return False, [] 
 
+# get the height of a block given the file and a block hash
 def get_height(file, block_hash):
     with open(file, "r") as block_file:
         r = csv.reader(block_file)
@@ -142,6 +135,7 @@ def read_fork_log(file, n):
         blocks = list(r)
         return blocks[n][0]
 
+# find which user an address belongs to
 def find_user(addr):
     with open('users.csv', 'r') as users_file:
         r = csv.reader(users_file)
@@ -156,6 +150,7 @@ def find_user(addr):
                     if address == addr:
                         return user
 
+# returns a list of all users
 def get_all_users():
     users = []
     try:
@@ -168,6 +163,7 @@ def get_all_users():
         pass
     return users
 
+# returns a list of all addresses
 def get_all_addr():
     users = get_all_users()
 
@@ -184,6 +180,7 @@ def get_all_addr():
 def handler(signum, frame):
     raise RuntimeError("timed out")
 
+# get block hash hex given a MerkleBlock object
 def get_block_hex(m):
     block = Block(m.version, m.prev_block, m.merkle_root, m.timestamp, m.bits, m.nonce)
     return block.hash().hex()
@@ -194,17 +191,18 @@ def prev_fork_hash(file):
         hashes = list(r)
         return hashes[-1][0]
 
+# get a list of all fork files
 def get_forks():
     forks = []
     counter = 0
-    not_found = True
-    while not_found:
+    while True:
         if exists(f"fork_{counter}.csv"):
            forks.append(f"fork_{counter}.csv")
            counter += 1
         else:
             return forks
 
+# make a fork file given the block in common with the main chain and the forked block(s)
 def make_fork_file(prev_block, fork_blocks):
     forks = get_forks()
     num = len(forks) 
@@ -223,12 +221,14 @@ def make_fork_file(prev_block, fork_blocks):
     return f"fork_{num}.csv"
 
 def write_block(prev_block, block_hash):
+    # if block builds on top of the main chain
     if read_log(-1) == prev_block:
         height = get_height('block_log.csv', prev_block) + 1
         with open("block_log.csv", "a", newline="") as block_file:
             w = csv.writer(block_file)
             w.writerow((block_hash, height))
         return None
+    # look for existing fork file with that prev_block
     else:
         forks = get_forks()
         for fork in forks:
@@ -241,6 +241,7 @@ def write_block(prev_block, block_hash):
     # if new fork
     make_fork_file(prev_block, [block_hash])
 
+# obtains all block hashed in main file (block_log.csv) and all fork files
 def all_hashes():
     with open("block_log.csv", "r") as block_file:
         r = csv.reader(block_file)
@@ -279,6 +280,7 @@ def need_reorg():
             return forks[highest]
     return None
 
+# gets all transaction ids
 def get_all_ids():
     users = get_all_users()
     ids = []
@@ -290,13 +292,19 @@ def get_all_ids():
                 ids.append([utxo[0], utxo[1], user])
     return ids
 
-# set flag 0
+# flags:
+# 0 = unconfirmed utxo
+# 1 = confirmed utxo
+# 2 = unconfirmed stxo
+# 3 = confirmed stxo
+
+# set tx flag to 0
 def tx_set_new(user, tx_id, index, amount, address, scriptPubKey, block_hash):
     with open(f"{user}_utxos.csv", 'a', newline="") as utxo_file:
         w = csv.writer(utxo_file)
         w.writerow([tx_id, index, amount, address, scriptPubKey, block_hash, 0])
 
-# set flag 1
+# set tx flag to 1
 def tx_set_confirmed(user, tx_id, index, amount, address, scriptPubKey, block_hash):
     with open(f"{user}_utxos.csv", 'r') as utxo_file:
         r = csv.reader(utxo_file)
@@ -362,6 +370,7 @@ def input_parser(current_addr, node):
         except SyntaxError:
             logging.info("recieved an invalid script")
 
+# reorg given the fork file
 def reorg(fork):
     node = SimpleNode(HOST, testnet=True, logging=False)
     with open(fork, "r") as fork_file:
@@ -400,7 +409,7 @@ def reorg(fork):
                 if utxo[5] in old:
                     old_utxos.append(utxo[0])
                     tx_set_flag(user, utxo[0], '0')
-    # get utxos mined in the new blocks and figure out if any userss have been double-spent 
+    # get utxos mined in the new blocks and figure out if any users have been double-spent 
     current_addr = get_all_addr()
     bf = BloomFilter(size=30, function_count=5, tweak=1729)
     for addr in current_addr:

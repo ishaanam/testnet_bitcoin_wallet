@@ -8,7 +8,7 @@ from send_to_storage import send_to_storage, get_all_balance
 from stx import get_balance, multi_send
 from rtx import recieve_tx
 from block_logger import block_syncer
-from block_utils import is_synched, get_known_height, handler, is_valid_node
+from block_utils import is_synched, get_known_height, handler, is_valid_node, start_log
 
 def run_wallet(p):
     print("NOTE: this wallet only operates on the testnet, enter 'sign out' to log into a different account and 'quit' to exit.")
@@ -16,6 +16,8 @@ def run_wallet(p):
     # If the block_log.csv file has never been created, meaning the wallet has never been run
     if not exists("block_log.csv"):
         print("Wallet will take a few seconds to start up ...")
+        # create block_log.csv
+        start_log()
         # run block_syncer() for ten seconds 
         signal.signal(signal.SIGALRM, handler)
         signal.alarm(10)
