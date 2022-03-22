@@ -41,7 +41,7 @@ def is_valid_node(host):
     try:
         node = SimpleNode(host, testnet=True, logging=False)
         return True
-    except (socket.gaierror, TimeoutError):
+    except (socket.gaierror, TimeoutError, ConnectionRefusedError):
         print("That appears to be an invalid node please try another node or keep using the previous node.")
         return False
 
