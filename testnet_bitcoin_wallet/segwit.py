@@ -1,4 +1,8 @@
-from tx import Tx, TxIn, TxOut
+from ProgrammingBitcoin.tx import Tx
+from ProgrammingBitcoin.script import Script
+
+def make_p2wpkh_script(h160):
+    return Script([0x00, h160])
 
 class SegwitTx(Tx):
     def __init__(self, version, tx_ins, tx_outs, witness, locktime, testnet=False):
@@ -14,12 +18,4 @@ class SegwitTx(Tx):
         pass
     
     def sig_hash(self):
-        pass
-
-class SegwitTxIn(TxIn):
-    def __init__(self, prev_tx, prev_index, script_sig=None, sequence=0xff):
-        pass
-
-class SegwitTxOut(TxOut):
-    def __init__(self,amount, script_pubkey):
         pass
