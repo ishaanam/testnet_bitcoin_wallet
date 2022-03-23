@@ -9,6 +9,7 @@ from stx import get_balance, multi_send
 from rtx import recieve_tx
 from block_logger import block_syncer
 from block_utils import is_synched, get_known_height, handler, is_valid_node, start_log
+from tx_history import format_tx_history
 
 def run_wallet(p):
     print("NOTE: this wallet only operates on the testnet, enter 'sign out' to log into a different account and 'quit' to exit.")
@@ -27,7 +28,7 @@ def run_wallet(p):
             pass
     # ask user to login and obtain their username
     username = has_login()
-    print("I can: calculate your current balance[balance], send transactions[send], recieve transactions[recieve], check if your wallet is fully synchronized with the blockchain[status], send all of your testnet bitcoin in all accounts to a specified address[storage], change the full node you get information from[change node] and get your extended public key [tpub] or your extended private key[tprv]")
+    print("I can: calculate your current balance[balance], send transactions[send], recieve transactions[recieve], check if your wallet is fully synchronized with the blockchain[status], send all of your testnet bitcoin in all accounts to a specified address[storage], change the full node you get information from[change node], display your full transaction history[tx history] and get your extended public key [tpub] or your extended private key[tprv]")
     # Start child proccess to run block_syncer()
     p.start()
     
@@ -90,6 +91,12 @@ def run_wallet(p):
             else:
                 print("The wallet is in the process of synchronizing with the blockchain.")
             print(f"The latest known block height is: {get_known_height()}")
+
+        # show the user their full transaction history
+        elif option == "tx history":
+            if is_synched() == False:
+                print("Please note that your wallet is still in the process of synching with the blockchain.")
+            format_tx_history(username)
         
         # allow user to sign into a different account
         elif option == "sign out":
