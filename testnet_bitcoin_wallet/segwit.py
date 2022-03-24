@@ -1,8 +1,20 @@
 from ProgrammingBitcoin.tx import Tx
 from ProgrammingBitcoin.script import Script
 
+from bech32 import decode
+
 def make_p2wpkh_script(h160):
     return Script([0x00, h160])
+
+def decode_bech32(addr, testnet=False):
+    if testnet:
+        hrp = "tb"
+    else:
+        hrp = "bc"
+    version, decoded = decode(hrp, addr)
+    if version == None:
+        raise ValueError("invalid address")
+    return(bytes.__new__(bytes, decoded))
 
 class SegwitTx(Tx):
     def __init__(self, version, tx_ins, tx_outs, witness, locktime, testnet=False):
