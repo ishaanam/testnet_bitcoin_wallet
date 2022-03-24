@@ -49,8 +49,20 @@ def make_user():
             if tprv[0:4] != "tprv":
                 raise RecoverFundsError("invalid tprv")
     else:
-        tprv = HD_Key.new_tprv()
-    tupl = (username, pass_hash, tprv, 0)
+        version = input("Would you like to generate p2pkh or p2wpkh addresses? [p2pkh/p2wpkh]: ")
+        v = None
+        while v == None:
+            if version == "p2pkh":
+                v =-1
+            elif version == "p2wpkh":
+                v = 0
+            else:
+                print("I don't understand")
+
+        tprv = HD_Key.new_tprv(v)
+    
+
+    tupl = (username, pass_hash, tprv, 0, v)
     try: 
         with open("users.csv", "a", newline="") as user_file:
             writer = csv.writer(user_file)
