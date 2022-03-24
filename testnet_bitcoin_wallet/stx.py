@@ -10,8 +10,7 @@ from ProgrammingBitcoin.op import OP_CODE_FUNCTIONS
 
 from jbok import make_address, get_pkobj
 from block_utils import tx_set_flag, tx_set_new
-from segwit import make_p2wpkh_script
-from bech32 import decode_bech32
+from segwit import make_p2wpkh_script, decode_bech32
 
 try:
     from network_settings import HOST
@@ -73,7 +72,7 @@ def multi_send(username):
                     target_h160 = decode_base58(target_address)
                     target_script = p2pkh_script(target_h160)
                 else:
-                    target_h160 = decode_bech32(target_address)
+                    target_h160 = decode_bech32(target_address, testnet=True)
                     target_script = make_p2wpkh_script(target_h160)
             except ValueError:
                 print("invalid address")
