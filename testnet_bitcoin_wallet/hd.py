@@ -25,16 +25,13 @@ def get_birthday():
     if birthday_word:
         return birthday_word[:-1]
 
-def new_mnemonic():
+def new_mnemonic(v=-1):
     mnemo = Mnemonic('english')
     words = mnemo.generate(strength=128)
-    # uncommented once segwit is implemented in this wallet
-    # version = input("Would you like legacy or segwit addresses?[legacy/segwit]: ")
-    # if version == "segwit":
-        # version_word = "ability"
-    # else:
-        # version_word = "abandon"
-    version_word = "abandon"
+    if v == 0: 
+        version_word = "ability"
+    elif v == -1:
+        version_word = "abandon"
     new_words = words +  f" {version_word}" 
     new_words += f" {get_birthday()}" 
     print(new_words)
@@ -139,8 +136,8 @@ class HD_Key(PrivateKey):
         return key.serialize(priv=True)
     
     @staticmethod
-    def new_tprv():
-        seed = new_mnemonic()
+    def new_tprv(v):
+        seed = new_mnemonic(v)
         tprv = HD_Key.new_master_key("00", "00000000", "00000000", seed, testnet=True)
         return tprv.serialize(priv=True) 
 
