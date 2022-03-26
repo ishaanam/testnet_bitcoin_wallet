@@ -15,6 +15,7 @@ from ProgrammingBitcoin.network import (
 from ProgrammingBitcoin.tx import Tx
 
 from block_utils import * 
+from segwit import decode_bech32
 
 try:
     # if possible, import the HOST variable from network_settings.py
@@ -39,7 +40,11 @@ def block_syncer():
         # if a new block has been mined 
         if now_hash != then_hash:
             for addr in current_addr:
-                h160 = decode_base58(addr)
+                prefix = addr[0]
+                if prefix == "n" or prefix == "m":
+                    h160 = decode_base58(addr)
+                elif prefix == "t":
+                    h160 = decode_bech32(addr, testnet=True)
                 bf.add(h160)
             node.send(bf.filterload())
             start_block = bytes.fromhex(then_hash)
