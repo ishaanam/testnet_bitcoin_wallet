@@ -17,6 +17,8 @@ from ProgrammingBitcoin.tx import Tx
 from ProgrammingBitcoin.bloomfilter import BloomFilter
 from ProgrammingBitcoin.merkleblock import MerkleBlock
 
+from segwit import make_p2wpkh_address
+
 try:
     from network_settings import HOST
 except (ModuleNotFoundError, ImportError):
@@ -291,6 +293,13 @@ def get_all_ids():
             for utxo in utxos:
                 ids.append([utxo[0], utxo[1], user])
     return ids
+
+def get_address(script_pk):
+    if script_pk.is_p2pkh_script_pubkey():
+        return script_pk.address(testnet=True)
+    else:
+        h160 = script_pk.cmds[1]
+        return make_p2wpkh_address(h160)
 
 # flags:
 # 0 = unconfirmed utxo
