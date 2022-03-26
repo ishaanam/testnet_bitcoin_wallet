@@ -110,7 +110,7 @@ def gap_exceeded(username):
     if used == [] and total > 20:
         return True, addresses[0]
     if used:
-        latest = addresses.index(used[-1])
+        latest = addresses.index(used[3])
         if (total - latest > 20):
             for addr in used:
                 addresses.remove(addr)
