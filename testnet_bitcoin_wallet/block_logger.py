@@ -84,7 +84,7 @@ def block_syncer():
                             # check for any transaction outputs pertaining to us
                             for i, tx_out in enumerate(message.tx_outs):
                                 for addr in current_addr:
-                                    if tx_out.script_pubkey.address(testnet=True) == addr:
+                                    if get_address(tx_out.script_pubkey) == addr:
                                         prev_tx = message.hash().hex()
                                         prev_index = i
                                         prev_amount = tx_out.amount
