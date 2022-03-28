@@ -64,7 +64,7 @@ def multi_send(username):
     total_amount = fee
     try:
         for i in range(num_r):
-            target_address = input(f"Recipient{i+1}: ")
+            target_address = input(f"Recipient {i+1}: ")
             try:
                 target_h160 = decode_base58(target_address)
             except ValueError:
@@ -132,7 +132,7 @@ def multi_send(username):
         sig = der + SIGHASH_ALL.to_bytes(1, 'big')
         sec = private_key.point.sec()
         script_sig = Script([sig, sec])
-        tx_obj.tx_ins[0].script_sig = script_sig
+        tx_obj.tx_ins[i].script_sig = script_sig
     
     print("hex serialization: ")
     print(tx_obj.serialize().hex())
