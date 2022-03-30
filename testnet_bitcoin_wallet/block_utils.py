@@ -116,8 +116,8 @@ def gap_exceeded(username):
                 addresses.remove(addr)
             oldest_unused_addr = addresses[0]
             return True, oldest_unused_addr 
-    else:
-        return False, [] 
+        return False, []
+    return False, [] 
 
 # get the height of a block given the file and a block hash
 def get_height(file, block_hash):
