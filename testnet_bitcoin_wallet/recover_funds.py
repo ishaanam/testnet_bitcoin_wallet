@@ -24,6 +24,7 @@ from ProgrammingBitcoin.tx import Tx, TxIn, TxOut
 from block_utils import *
 from hd import HD_Key
 from jbok import get_addr
+from segwit import decode_bech32
 
 
 TESTNET_GENESIS_BLOCK = bytes.fromhex("000000000933ea01ad0ee984209779baaec3ced90fa3f408719526f8d77f4943")
@@ -67,19 +68,24 @@ def get_birthday_hash(word):
     return block_hash, h
 
 # generate a batch of addresses to look for funds 
-def generate_batch(key, index):
+def generate_batch(key, index, v):
     current_addr = []
     for _ in range(40):
         ck = key.CKDpriv(index).k
-        addr = get_addr(ck)
+        addr = get_addr(ck, v)
         current_addr.append([ck, addr])
         index += 1
     return current_addr, index 
 
 def gap_exceeded(username, current_addr):
-    with open(f"{username}_utxos.csv", 'r') as utxos:
-        r = csv.reader(utxos)
-        lines = list(r)
+    try:
+        with open(f"{username}_utxos.csv", 'r') as utxos:
+            r = csv.reader(utxos)
+            lines = list(r)
+    except FileNotFoundError:
+        with open(f'{username}_utxos.csv', 'w', newline="") as utxo_file:
+            writer = csv.writer(utxo_file)
+        return False, ""
     if lines != []:
         latest_addr = lines[-1][3]
         for i, line in enumerate(current_addr):
@@ -97,7 +103,10 @@ def recover_batch(r_user, node, current_addr, height):
     start_blocks = get_start_blocks(height)
     bf = BloomFilter(size=30, function_count=5, tweak=1729)
     for addr in current_addr:
-        h160 = decode_base58(addr[1])
+        if addr[1][0] == "t":
+            h160 = decode_bech32(addr[1], testnet=True)
+        else:
+            h160 = decode_base58(addr[1])
         bf.add(h160)
     for start in start_blocks:
         start_block = bytes.fromhex(start)
@@ -147,7 +156,7 @@ def recover_batch(r_user, node, current_addr, height):
         incomplete, latest_addr = gap_exceeded(r_user, current_addr)
         return incomplete, latest_addr 
         
-def recover_funds(username, last_words=None):
+def recover_funds(username, tprv, last_words=None):
     if last_words == None:
         last_words = ['abandon', 'abandon']
     with open('users.csv', 'r') as user_file:
@@ -160,31 +169,28 @@ def recover_funds(username, last_words=None):
     index = 0
     all_addr = []
     
-    if last_words:
-        birthday_word = last_words[1]
-        birthday, birthday_height = get_birthday_hash(birthday_word)
-        if birthday == None:
-            print("You must let your wallet sync further in order to be able to recover all addresses, please try again once your wallet has fully synchronized with the blockchain. (Use 'status' in order to check when the wallet is synced)")
-        if last_words[0] == "abandon":
-            # generate and check for legacy addresses 
-            incomplete = True
-            node = SimpleNode(HOST, testnet=True, logging=False)
-            node.handshake()
-            while incomplete:
-                current_addr, index = generate_batch(key, index)
-                all_addr += current_addr
-                incomplete, last_addr = recover_batch(username, node, current_addr, birthday_height)
-            for i, addr in enumerate(all_addr):
-                if addr[1] == last_addr:
-                    break
-            all_addr = all_addr[:i+5]
-            with open(f"{username}.csv", 'w', newline="") as addr_file:
-                w = csv.writer(addr_file)
-                w.writerows(all_addr)
-        if last_words[0] == "ability":
-            # generate and check for segwit addresses
-            pass
-    else:
-        # generate and check both legacy & segwit
-        # and use the software's birthday as the wallet birthday
-        pass
+    birthday_word = last_words[1]
+    birthday, birthday_height = get_birthday_hash(birthday_word)
+
+    if birthday == None:
+        print("You must let your wallet sync further in order to be able to recover all addresses, please try again once your wallet has fully synchronized with the blockchain. (Use 'status' in order to check when the wallet is synced)")
+    if last_words[0] == "abandon":
+        # generate and check for legacy addresses 
+        v = "-1"
+    if last_words[0] == "ability":
+        v = "0"
+    incomplete = True
+    node = SimpleNode(HOST, testnet=True, logging=False)
+    node.handshake()
+    while incomplete:
+        current_addr, index = generate_batch(key, index, v)
+        all_addr.append(current_addr)
+        incomplete, last_addr = recover_batch(username, node, current_addr, birthday_height)
+    for i, addr in enumerate(all_addr):
+        if addr[1] == last_addr:
+            break
+    all_addr = all_addr[:i+5]
+    with open(f"{username}.csv", 'w', newline="") as addr_file:
+        w = csv.writer(addr_file)
+        w.writerows(all_addr)
+    return v

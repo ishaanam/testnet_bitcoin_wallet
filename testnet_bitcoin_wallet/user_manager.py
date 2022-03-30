@@ -43,7 +43,9 @@ def make_user():
             new_words = input("Please enter your remaining 2 words seperated by spaces [If none juse enter]: ")
             if new_words:
                 new_words = new_words.split()
-                recover_funds(username, new_words)
+                v = recover_funds(username, tprv, new_words)
+            else:
+                v = recover_funds(username, tprv)
         else:
             tprv = input("tprv: ")
             if tprv[0:4] != "tprv":
