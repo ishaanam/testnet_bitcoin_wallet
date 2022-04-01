@@ -36,7 +36,7 @@ def run_wallet(p):
     # until user enters "quit"
     while active:
         print("What can I help you with?")
-        option = input("You: ")
+        option = input(">>> ")
         
         # send transaction
         if option == "send":
