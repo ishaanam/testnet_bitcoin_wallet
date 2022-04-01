@@ -1,4 +1,3 @@
-import time
 import csv
 
 from ProgrammingBitcoin.ecc import PrivateKey
@@ -8,9 +7,9 @@ from ProgrammingBitcoin.tx import Tx, TxIn, TxOut
 from ProgrammingBitcoin.network import SimpleNode
 from ProgrammingBitcoin.op import OP_CODE_FUNCTIONS
 
-from jbok import make_address, get_pkobj
+from jbok import make_address, get_pkobj, get_version
 from block_utils import tx_set_flag, tx_set_new
-from segwit import make_p2wpkh_script, decode_bech32
+from segwit import make_p2wpkh_script, decode_bech32, SegwitTx
 
 try:
     from network_settings import HOST
@@ -51,7 +50,35 @@ def get_all_utxos(username):
             output.append(utxo)
     return output 
 
+def sign_inputs_legacy(tx_obj, keys, script_sigs):
+    for i, tx_in in enumerate(tx_obj.tx_ins):
+        private_key = get_pkobj(keys[i])
+        script_pubkey = make_p2pkh_script(script_sigs[i])
+        z = tx_obj.sig_hash(i, script_pubkey)
+        der = private_key.sign(z).der()
+        sig = der + SIGHASH_ALL.to_bytes(1, 'big')
+        sec = private_key.point.sec()
+        script_sig = Script([sig, sec])
+        tx_obj.tx_ins[0].script_sig = script_sig
+    return tx_obj
+
+def sign_inputs_segwit(tx_obj, keys, script_sigs):
+    for i, tx_in in enumerate(tx_obj.tx_ins):
+        private_key = get_pkobj(keys[i])
+        script_pubkey = make_p2pkh_script(script_sigs[i])
+        z = tx_obj.sig_hash(i, script_pubkey)
+        der = private_key.sign(z).der()
+        sig = der + SIGHASH_ALL.to_bytes(1, 'big')
+        sec = private_key.point.sec()
+        tx_obj.tx_ins[i].witness.items[0] = sig
+        tx_obj.tx_ins[i].witness.items[1] = sec
+    return tx_obj
+
 def multi_send(username):
+    v = get_version(username)
+    if v == '0':
+        print("sending from segwit version 0 addresses is not currently supported")
+        return None
     num_r = input("Number of recipients: ")
     try:
         num_r = int(num_r)
@@ -122,26 +149,32 @@ def multi_send(username):
             break
 
     if used_amount > total_amount:
-        change_address = make_address(username)
-        change_h160 = decode_base58(change_address)
-        change_script = p2pkh_script(change_h160)
+        if v == '-1':
+            change_address = make_address(username)
+            change_h160 = decode_base58(change_address)
+            change_script = p2pkh_script(change_h160)
+        elif v == '0':
+            change_address = make_address(username)
+            change_h160 = decode_bech32(change_address)
+            change_script = p2wpkh_script(change_h160)
         change_amount = used_amount - total_amount
         my_tx_outs.append(TxOut(amount=change_amount, script_pubkey=change_script))
-
-    tx_obj = Tx(1, my_tx_ins, my_tx_outs, 0, True)
-
-    for i, tx_in in enumerate(tx_obj.tx_ins):
-        private_key = get_pkobj(my_wallets[i])
-        script_pubkey = make_p2pkh_script(my_script_sigs[i])
-        z = tx_obj.sig_hash(i, script_pubkey)
-        der = private_key.sign(z).der()
-        sig = der + SIGHASH_ALL.to_bytes(1, 'big')
-        sec = private_key.point.sec()
-        script_sig = Script([sig, sec])
-        tx_obj.tx_ins[i].script_sig = script_sig
+    
+    if v == '-1':
+        tx_obj = Tx(1, my_tx_ins, my_tx_outs, 0, True)
+        tx_obj = sign_inputs_legacy(tx_obj, my_wallets, my_script_sigs)
+    elif v == '0':
+        marker = b'\x00'
+        flag = b'\x01'
+        tx_obj = SegwitTx(1, marker, flag, my_tx_ins, my_tx_outs, 0, True)
+        tx_obj = sign_inputs_segwit(tx_obj, my_wallets, my_script_sigs)
     
     print("hex serialization: ")
-    print(tx_obj.serialize().hex())
+    if v == '-1':
+        print(tx_obj.serialize().hex())
+    elif v == '0':
+        print(tx_obj.serialize_segwit.hex())
+
     print("transaction id")
     print(tx_obj.id())
 
