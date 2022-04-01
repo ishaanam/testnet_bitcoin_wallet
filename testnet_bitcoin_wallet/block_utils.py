@@ -127,7 +127,7 @@ def get_height(file, block_hash):
     for block in blocks:
         if block[0] == block_hash:
             return int(block[1])
-    return None
+    return 0
 
 def read_fork_log(file, n):
     with open(file, "r") as block_file:
