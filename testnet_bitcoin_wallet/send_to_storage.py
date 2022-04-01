@@ -27,7 +27,7 @@ def send_to_storage():
     print("Please provide exactly one address to send the funds to. If you don't care where the testnet Bitcoin goes, enter 'default'")
     target_address = input("Address: ")
     if target_address == "default":
-        target_address = "mi9oPqzbuww3dRmLZa2rDAvP27S6312Jwt"
+        target_address = "mzvy7gC2HSL1dzLbKMEfspjNVeFuXXVwnP"
     else:
         try:
             target_script = p2pkh_script(decode_base58(target_address))

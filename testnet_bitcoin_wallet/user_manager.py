@@ -3,7 +3,7 @@ import getpass
 from hashlib import sha256
 from block_utils import get_all_users
 from hd import HD_Key 
-from recover_funds import recover_funds
+from recover_funds import recover_funds, RecoverFundsError
 
 def save_pass(password):
     password = sha256(password.encode())
@@ -37,6 +37,8 @@ def make_user():
         choice = input("Would you like to import a tprv or enter your mnemonic code words?[tprv/words]: ")
         if choice == "words":
             words = input("Please enter your first 12 words seperated by spaces: ")
+            if len(words.split()) != 12:
+                raise RecoverFundsError("invalid words")
             tprv = HD_Key.recover_wallet(words)
             new_words = input("Please enter your remaining 2 words seperated by spaces [If none juse enter]: ")
             if new_words:
@@ -44,6 +46,8 @@ def make_user():
                 recover_funds(username, new_words)
         else:
             tprv = input("tprv: ")
+            if tprv[0:4] != "tprv":
+                raise RecoverFundsError("invalid tprv")
     else:
         tprv = HD_Key.new_tprv()
     tupl = (username, pass_hash, tprv, 0)
@@ -55,7 +59,6 @@ def make_user():
         with open("users.csv", "w", newline="") as user_file:
             writer = csv.writer(user_file)
             writer.writerow(tupl)
-
 
     with open(f'{username}.csv', 'w', newline="") as new_file:
         writer = csv.writer(new_file)
@@ -88,9 +91,12 @@ def has_login():
             not_logged = False
             return starter_info
         elif account == "n":
-            starter_info = make_user()
-            not_logged = False
-            return starter_info
+            try:
+                starter_info = make_user()
+                not_logged = False
+                return starter_info
+            except RecoverFundsError as e:
+                print(e)
         else:
             print("I don't understand ")
 

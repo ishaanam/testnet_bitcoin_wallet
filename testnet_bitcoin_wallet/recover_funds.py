@@ -36,6 +36,9 @@ except (ModuleNotFoundError, ImportError):
         net_file.write('HOST = "testnet.programmingbitcoin.com"')
         HOST = 'testnet.programmingbitcoin.com'
 
+class RecoverFundsError(Exception):
+    pass
+
 # get start blocks of every 2000 blocks
 def get_start_blocks(height):
     latest_height = get_known_height() 
