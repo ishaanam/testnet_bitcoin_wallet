@@ -1,7 +1,7 @@
 import unittest 
 
 from ProgrammingBitcoin.tx import Tx, TxIn, TxOut
-from ProgrammingBitcoin.script import Script
+from ProgrammingBitcoin.script import Script, p2pkh_script
 from ProgrammingBitcoin.helper import (
     encode_varint,
     hash256,
@@ -12,6 +12,7 @@ from ProgrammingBitcoin.helper import (
 )
 
 from bech32 import decode, encode
+from jbok import get_pkobj
 
 # Makes both p2wpkh and p2wsh scripts
 # TO-DO: `h160` isn't always 160 bits, in the case of p2wsh it should actually be 256 bits, so the name should be changed
@@ -55,7 +56,7 @@ class SegwitTx(Tx):
         return result
 
     @classmethod
-    def parse(cls, s):
+    def parse(cls, s, testnet=False):
         version = little_endian_to_int(s.read(4))
         marker = s.read(1)
         flag = s.read(1)
@@ -75,10 +76,69 @@ class SegwitTx(Tx):
         for tx_in in inputs:
             tx_in.witness = Witness.parse(s)
         locktime = little_endian_to_int(s.read(4))
-        return cls(version, marker, flag,inputs, outputs, locktime)
+        return cls(version, marker, flag,inputs, outputs, locktime, testnet)
 
-    def sig_hash_segwit_v0(self, input_index): 
-        pass
+    def sig_hash_segwit_v0(self, input_index, h160, amount): 
+        """
+        From BIP-143
+        Double SHA256 of the serialization of:
+         1. nVersion of the transaction (4-byte little endian)
+            [SELF EXPLANATORY]
+         
+         2. hashPrevouts (32-byte hash)
+            hash256(all:txid+index) 
+         
+         3. hashSequence (32-byte hash)
+            hash256(all:sequence)
+         
+         4. outpoint (32-byte hash + 4-byte little endian) 
+            input being spent: tx_id+index
+             
+         5. scriptCode of the input (serialized as scripts inside CTxOuts)
+            0x1976a914{20-byte-pubkey-hash}88ac
+         
+         6. value of the output spent by this input (8-byte little endian)
+            [SELF EXPLANATORY]
+         
+         7. nSequence of the input (4-byte little endian)
+            sequence on input
+         
+         8. hashOutputs (32-byte hash)
+            hash245(all:amount+script_pubkey) 
+         
+         9. nLocktime of the transaction (4-byte little endian)
+            [SELF EXPLANATORY]
+
+        10. sighash type of the signature (4-byte little endian)
+            [SELF EXPLANATORY]
+        """
+
+        s = int_to_little_endian(self.version, 4) #1
+        prevouts = b"" 
+        sequences = b"" 
+        for tx_in in self.tx_ins:
+            prevouts += tx_in.prev_tx[::-1]
+            prevouts += int_to_little_endian(tx_in.prev_index, 4)
+            sequences += int_to_little_endian(tx_in.sequence, 4)
+        s += hash256(prevouts) #2
+        s += hash256(sequences) #3
+       
+        tx_in = self.tx_ins[input_index] #4
+        s += tx_in.prev_tx[::-1] + int_to_little_endian(tx_in.prev_index, 4)
+
+        s += p2pkh_script(h160).serialize() #5
+        s += int_to_little_endian(amount, 8) # 6
+        s += int_to_little_endian(tx_in.sequence, 4) # 7
+
+        outputs = b"" #8
+        for tx_out in self.tx_outs:
+            outputs += tx_out.serialize()
+        
+        s += hash256(outputs)
+        s += int_to_little_endian(self.locktime, 4) #9
+        s += int_to_little_endian(SIGHASH_ALL, 4) # 10
+        return int.from_bytes(hash256(s), 'big')
+    
 
 class Witness():
     def __init__(self, items):
