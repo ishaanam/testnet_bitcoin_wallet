@@ -58,7 +58,17 @@ def get_version(username):
     with open("users.csv", "r") as user_file:
         r = csv.reader(user_file)
         lines = list(r)
-        for line in lines:
-            if line[0] == username:
+    
+    for line in lines:
+        if line[0] == username:
+            if len(line) == 5:
                 version = line[4]
+            else:
+                version = "-1"
+                line.append(version)
+                with open("users.csv", "w") as user_file:
+                    w = csv.writer(user_file)
+                    w.writerows(lines)
+                    print("gave user a default value")
+    
     return version
