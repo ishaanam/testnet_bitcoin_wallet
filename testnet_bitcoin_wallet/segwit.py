@@ -3,7 +3,9 @@ from ProgrammingBitcoin.script import Script
 
 from bech32 import decode
 
-def make_p2wpkh_script(h160):
+# Makes both p2wpkh and p2wsh scripts
+# TO-DO: `h160` isn't always 160 bits, in the case of p2wsh it should actually be 256 bits, so the name should be changed
+def make_p2wx_script(h160):
     return Script([0x00, h160])
 
 def decode_bech32(addr, testnet=False):
@@ -14,7 +16,7 @@ def decode_bech32(addr, testnet=False):
     version, decoded = decode(hrp, addr)
     if version == None:
         raise ValueError("invalid address")
-    return(bytes.__new__(bytes, decoded))
+    return(bytes.__new__(bytes, decoded), version)
 
 class SegwitTx(Tx):
     def __init__(self, version, tx_ins, tx_outs, witness, locktime, testnet=False):

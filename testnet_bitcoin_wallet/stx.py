@@ -10,7 +10,7 @@ from ProgrammingBitcoin.op import OP_CODE_FUNCTIONS
 
 from jbok import make_address, get_pkobj
 from block_utils import tx_set_flag, tx_set_new
-from segwit import make_p2wpkh_script, decode_bech32
+from segwit import make_p2wx_script, decode_bech32
 
 try:
     from network_settings import HOST
@@ -67,13 +67,24 @@ def multi_send(username):
         for i in range(num_r):
             target_address = input(f"Recipient {i+1}: ")
             prefix = target_address[0]
+            long_prefix = target_address[:3]
             try:
                 if prefix == "m" or prefix == "n":
                     target_h160 = decode_base58(target_address)
                     target_script = p2pkh_script(target_h160)
+                elif long_prefix == "tb1":
+                    target_h160, version = decode_bech32(target_address, testnet=True)
+                    if version == 0:
+                        target_script = make_p2wx_script(target_h160)
+                    elif version == 1:
+                        print("this wallet does not currently support taproot")
+                        return None
+                    else:
+                        print("unknown segwit version")
+                        return None
                 else:
-                    target_h160 = decode_bech32(target_address, testnet=True)
-                    target_script = make_p2wpkh_script(target_h160)
+                    print("address not recognized, this wallet currently supports the following address types: p2pkh, p2wsh, p2wpkh")
+                    return
             except ValueError:
                 print("invalid address")
                 return None
