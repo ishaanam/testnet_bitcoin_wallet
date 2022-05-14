@@ -27,9 +27,17 @@ except (ModuleNotFoundError, ImportError):
 
 logging.basicConfig(filename='block.log', format='%(levelname)s:%(message)s', level=logging.DEBUG)
 
+def initial_connect():
+    try:
+        node = SimpleNode(HOST, testnet=True, logging=False)
+        node.handshake()
+    except (socket.gaierror, ConnectionRefusedError) as e:
+        print(e)
+        print("Please ensure that your wallet and node are both online. If either aren't, consider running the wallet in offline mode temporarily")
+        quit()
+
+
 def block_syncer():
-    node = SimpleNode(HOST, testnet=True, logging=False)
-    node.handshake()
     # As long as wallet is running
     while True:
         now_hash = get_latest_block_hash()

@@ -1,8 +1,10 @@
 import csv
 
-from block_utils import get_known_height, get_height
+from block_utils import get_known_height, get_height, is_synched
 
-def get_tx_history(username, show_unconfirmed=False):
+def get_tx_history(username, online, show_unconfirmed=False):
+    if online:
+        synched = is_synched()
     tx_history = []
     latest_height = int(get_known_height())
     with open(f"{username}_utxos.csv", 'r') as utxo_file:
@@ -11,7 +13,13 @@ def get_tx_history(username, show_unconfirmed=False):
     for tx in txs:
         # transaction hash, amount, confirmation status, #of confirmations
         block_hash = tx[-2]
-        confirmations = latest_height - get_height("block_log.csv", block_hash) + 1
+        if online:
+            if synched:
+                confirmations = latest_height - get_height("block_log.csv", block_hash) + 1
+            else:
+                confirmations = "unknown (synchronizing)"
+        else:
+            confirmations = "unknown (offline)"
         if tx[-1] == '0': 
             status = "unconfirmed" 
         elif tx[-1] == '1':
@@ -26,7 +34,7 @@ def get_tx_history(username, show_unconfirmed=False):
             tx_history.append([tx[0], tx[2], status, confirmations]) 
     return tx_history
             
-def format_tx_history(username):
+def format_tx_history(username, online):
     PURPLE = '\033[94m'
     RED = '\033[91m'
     YELLOW = '\033[93m'
@@ -36,7 +44,7 @@ def format_tx_history(username):
         show_unconfirmed = True
     else:
         show_unconfirmed = False
-    tx_history = get_tx_history(username, show_unconfirmed)
+    tx_history = get_tx_history(username, online, show_unconfirmed)
     for tx in tx_history:
         print("\n")
         print("TRANSACTION")
