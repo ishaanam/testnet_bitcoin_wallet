@@ -23,7 +23,7 @@ def get_all_balance():
         balance += get_balance(user)
     return balance
 
-def send_to_storage():
+def send_to_storage(online):
     print("Please provide exactly one address to send the funds to. If you don't care where the testnet Bitcoin goes, enter 'default'")
     target_address = input("Address: ")
     if target_address == "default":
@@ -83,11 +83,18 @@ def send_to_storage():
     print("transaction id")
     print(tx_obj.id())
 
-    node = SimpleNode(HOST, testnet=True, logging=False)
-    node.handshake()
-    node.send(tx_obj)
+    if online:
+        node = SimpleNode(HOST, testnet=True, logging=False)
+        node.handshake()
+        node.send(tx_obj)
+        print('tx sent!')
+        self.broadcast = 'n'
+    else:
+        while self_broadcast != 'n' and self_broadcast != 'y':
+            self_broadcast = input("Did you broadcast this transaction yourself?[y/n]")
 
-    for user in users:
-        with open(f"{user}_utxos.csv", 'w') as utxo_file:
-            w = csv.writer(utxo_file)
+    if online or self_broadcast == 'y':
+        for user in users:
+            with open(f"{user}_utxos.csv", 'w') as utxo_file:
+                w = csv.writer(utxo_file)
 

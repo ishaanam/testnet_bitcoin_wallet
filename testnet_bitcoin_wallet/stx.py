@@ -51,7 +51,7 @@ def get_all_utxos(username):
             output.append(utxo)
     return output 
 
-def multi_send(username):
+def multi_send(username, online=True):
     num_r = input("Number of recipients: ")
     try:
         num_r = int(num_r)
@@ -156,14 +156,21 @@ def multi_send(username):
     print("transaction id")
     print(tx_obj.id())
 
-    node = SimpleNode(HOST, testnet=True, logging=False)
-    node.handshake()
-    node.send(tx_obj)
-    print('tx sent!')
+    self_broadcast = None
+    if online:
+        node = SimpleNode(HOST, testnet=True, logging=False)
+        node.handshake()
+        node.send(tx_obj)
+        print('tx sent!')
+        self_broadcast = 'n'
+    else:
+        while self_broadcast != 'n' and self_broadcast != 'y':
+            self_broadcast = input("Did you broadcast this transaction yourself?[y/n]")
 
-    for utxo in used_utxos:
-        tx_set_flag(username, utxo, '2') 
+    if online or self_broadcast == 'y':
+        for utxo in used_utxos:
+            tx_set_flag(username, utxo, '2') 
     
-    if 'change_address' in locals():
-        change_index = len(tx_obj.tx_outs) - 1 
-        tx_set_new(username, tx_obj.id(), change_index, change_amount, change_address, change_script, "0")
+        if 'change_address' in locals():
+            change_index = len(tx_obj.tx_outs) - 1 
+            tx_set_new(username, tx_obj.id(), change_index, change_amount, change_address, change_script, "0")
