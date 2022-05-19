@@ -3,6 +3,7 @@ import logging
 import signal
 from os.path import exists
 import socket
+from enum import Enum
 
 from ProgrammingBitcoin.block import Block
 from ProgrammingBitcoin.helper import decode_base58
@@ -16,6 +17,12 @@ from ProgrammingBitcoin.network import (
 from ProgrammingBitcoin.tx import Tx
 from ProgrammingBitcoin.bloomfilter import BloomFilter
 from ProgrammingBitcoin.merkleblock import MerkleBlock
+
+class TXOState(Enum):
+    UNCONFIRMED_UTXO = 0
+    CONFIRMED_UTXO = 1
+    UNCONFIRMED_STXO = 2
+    CONFIRMED_STXO = 3
 
 try:
     from network_settings import HOST
@@ -292,17 +299,11 @@ def get_all_ids():
                 ids.append([utxo[0], utxo[1], user])
     return ids
 
-# flags:
-# 0 = unconfirmed utxo
-# 1 = confirmed utxo
-# 2 = unconfirmed stxo
-# 3 = confirmed stxo
-
 # set tx flag to 0
 def tx_set_new(user, tx_id, index, amount, address, scriptPubKey, block_hash):
     with open(f"{user}_utxos.csv", 'a', newline="") as utxo_file:
         w = csv.writer(utxo_file)
-        w.writerow([tx_id, index, amount, address, scriptPubKey, block_hash, 0])
+        w.writerow([tx_id, index, amount, address, scriptPubKey, block_hash, TXOState.UNCONFIRMED_UTXO.value])
 
 # set tx flag to 1
 def tx_set_confirmed(user, tx_id, index, amount, address, scriptPubKey, block_hash):
@@ -314,10 +315,10 @@ def tx_set_confirmed(user, tx_id, index, amount, address, scriptPubKey, block_ha
             if utxo[0] == tx_id:
                 existing_index = i
     if existing_index != None:
-        utxos[existing_index][6] = 1
+        utxos[existing_index][6] = TXOState.CONFIRMED_UTXO.value
         utxos[existing_index][5] = block_hash
     else:
-        utxos.append([tx_id, index, amount, address, scriptPubKey, block_hash, 1])
+        utxos.append([tx_id, index, amount, address, scriptPubKey, block_hash, TXOState.CONFIRMED_UTXO.value])
     with open(f"{user}_utxos.csv", 'w', newline="") as utxo_file:
         w = csv.writer(utxo_file)
         w.writerows(utxos)
@@ -332,11 +333,10 @@ def tx_set_flag(user, tx_id, flag, index=None):
                 existing_index = i
             elif utxo[0] == tx_id and index == None:
                 existing_index = i
-    utxos[existing_index][-1] = flag 
+    utxos[existing_index][-1] = int(flag)
     with open(f"{user}_utxos.csv", 'w') as utxo_file:
         w = csv.writer(utxo_file)
         w.writerows(utxos)
-
 
 def input_parser(current_addr, node):
     while True:
@@ -355,7 +355,7 @@ def input_parser(current_addr, node):
                             prev_tx = message.hash().hex()
                             r_user = find_user(addr)
                             if prev_tx in old_utxos:
-                                tx_set_flag(r_user,prev_tx, '1')
+                                tx_set_flag(r_user,prev_tx, TXOState.CONFIRMED_UTXO.value)
                                 old_utxos.remove(prev_tx)
                             else:
                                 prev_index = i
@@ -366,7 +366,7 @@ def input_parser(current_addr, node):
                     for i, tx_in in enumerate(message.tx_ins):
                         for tx_id in ids:
                             if tx_id[0] == tx_in.prev_tx.hex() and int(tx_id[1]) == tx_in.prev_index:
-                                tx_set_flag(tx_id[2], tx_id[0], '3', tx_id[1])
+                                tx_set_flag(tx_id[2], tx_id[0], TXOState.CONFIRMED_STXO.value, tx_id[1])
         except SyntaxError:
             logging.info("recieved an invalid script")
 
@@ -408,7 +408,7 @@ def reorg(fork):
             for utxo in utxos:
                 if utxo[5] in old:
                     old_utxos.append(utxo[0])
-                    tx_set_flag(user, utxo[0], '0')
+                    tx_set_flag(user, utxo[0], TXOState.UNCONFIRMED_UTXO.value)
     # get utxos mined in the new blocks and figure out if any users have been double-spent 
     current_addr = get_all_addr()
     bf = BloomFilter(size=30, function_count=5, tweak=1729)

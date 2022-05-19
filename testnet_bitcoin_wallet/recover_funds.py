@@ -139,7 +139,7 @@ def recover_batch(r_user, node, current_addr, height):
                         for i, tx_in in enumerate(message.tx_ins):
                             for tx_id in ids:
                                 if tx_id[0] == tx_in.prev_tx.hex() and int(tx_id[1]) == tx_in.prev_index:
-                                    tx_set_flag(tx_id[2], tx_id[0], '3', tx_id[1])
+                                    tx_set_flag(tx_id[2], tx_id[0], TXOState.CONFIRMED_STXO.value, tx_id[1])
                 except SyntaxError:
                     pass
         except RuntimeError as e:

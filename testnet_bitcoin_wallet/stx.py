@@ -9,7 +9,7 @@ from ProgrammingBitcoin.network import SimpleNode
 from ProgrammingBitcoin.op import OP_CODE_FUNCTIONS
 
 from jbok import make_address, get_pkobj
-from block_utils import tx_set_flag, tx_set_new
+from block_utils import tx_set_flag, tx_set_new, TXOState
 from segwit import make_p2wx_script, decode_bech32
 
 try:
@@ -169,7 +169,7 @@ def multi_send(username, online=True):
 
     if online or self_broadcast == 'y':
         for utxo in used_utxos:
-            tx_set_flag(username, utxo, '2') 
+            tx_set_flag(username, utxo, TXOState.UNCONFIRMED_STXO.value)
     
         if 'change_address' in locals():
             change_index = len(tx_obj.tx_outs) - 1 
