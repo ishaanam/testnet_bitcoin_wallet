@@ -39,6 +39,8 @@ def initial_connect():
 
 def block_syncer():
     # As long as wallet is running
+    node = SimpleNode(HOST, testnet=True, logging=False)
+    node.handshake()
     while True:
         now_hash = get_latest_block_hash()
         then_hash = read_log(-1)
@@ -46,6 +48,18 @@ def block_syncer():
         bf = BloomFilter(size=30, function_count=5, tweak=1729)
         # if a new block has been mined 
         if now_hash != then_hash:
+            if is_synched():
+                users = get_all_users()
+                for user in users:
+                    with open(f"{user}_utxos.csv", 'r') as utxo_file:
+                        r = csv.reader(utxo_file)
+                        utxos = list(r)
+                        for utxo in utxos:
+                            if utxo[6] == TXOState.UNCONFIRMED_STXO.value:
+                                utxo[6] = TXOState.CONFIRMED_UTXO.value
+                    with open(f"{user}_utxos.csv", 'w') as utxo_file:
+                        w = csv.writer(utxo_file)
+                        w.writerows(utxos)
             for addr in current_addr:
                 h160 = decode_base58(addr)
                 bf.add(h160)

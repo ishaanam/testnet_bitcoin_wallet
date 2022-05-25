@@ -19,10 +19,10 @@ from ProgrammingBitcoin.bloomfilter import BloomFilter
 from ProgrammingBitcoin.merkleblock import MerkleBlock
 
 class TXOState(Enum):
-    UNCONFIRMED_UTXO = 0
-    CONFIRMED_UTXO = 1
-    UNCONFIRMED_STXO = 2
-    CONFIRMED_STXO = 3
+    UNCONFIRMED_UTXO = "0"
+    CONFIRMED_UTXO = "1"
+    UNCONFIRMED_STXO = "2"
+    CONFIRMED_STXO = "3"
 
 try:
     from network_settings import HOST
