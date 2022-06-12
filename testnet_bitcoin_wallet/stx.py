@@ -19,6 +19,9 @@ except (ModuleNotFoundError, ImportError):
         net_file.write('HOST = "testnet.programmingbitcoin.com"')
         from network_settings import HOST
 
+class TransactionConstructionError(Exception):
+    pass
+
 def get_balance(username, unconfirmed=False):
     amount = 0
     unconfirmed_amount = 0
@@ -51,61 +54,39 @@ def get_all_utxos(username):
             output.append(utxo)
     return output 
 
-def multi_send(username, online=True):
-    num_r = input("Number of recipients: ")
-    try:
-        num_r = int(num_r)
-        if num_r <= 0:
-            print("Invalid number of recipients")
-            return None
-        fee = 300 + (100 * num_r)
-    except ValueError:
-        print("number of recipients must be an integer")
+def construct_transaction(recipients, values, username):
+    fee = 300 + (100 * len(recipients))
     my_tx_outs = []
     total_amount = fee
-    try:
-        for i in range(num_r):
-            target_address = input(f"Recipient {i+1}: ")
-            prefix = target_address[0]
-            long_prefix = target_address[:3]
-            try:
-                if prefix == "m" or prefix == "n":
-                    target_h160 = decode_base58(target_address)
-                    target_script = p2pkh_script(target_h160)
-                elif long_prefix == "tb1":
-                    target_h160, version = decode_bech32(target_address, testnet=True)
-                    if version == 0:
-                        target_script = make_p2wx_script(target_h160)
-                    elif version == 1:
-                        print("this wallet does not currently support taproot")
-                        return None
-                    else:
-                        print("unknown segwit version")
-                        return None
+    for i, target_address in enumerate(recipients):
+        prefix = target_address[0]
+        long_prefix = target_address[:3]
+        try:
+            if prefix == "m" or prefix == "n":
+                target_h160 = decode_base58(target_address)
+                target_script = p2pkh_script(target_h160)
+            elif long_prefix == "tb1":
+                target_h160, version = decode_bech32(target_address, testnet=True)
+                if version == 0:
+                    target_script = make_p2wx_script(target_h160)
+                elif version == 1:
+                    raise TransactionConstructionError("this wallet does not currently support taproot")
                 else:
-                    print("address not recognized, this wallet currently supports the following address types: p2pkh, p2wsh, p2wpkh")
-                    return
-            except ValueError:
-                print("invalid address")
-                return None
-            try:
-                target_amount = int(input("Amount(in Satoshis): "))
-            except ValueError:
-                print("invalid amount")
-                return None
-            my_tx_outs.append(TxOut(amount=target_amount, script_pubkey=target_script))
-            total_amount += target_amount
-    except TypeError:
-        print("Invalid number of recipients")
-        return None
-    
+                    raise TransactionConstructionError("unknown segwit version")
+            else:
+                raise TransactionConstructionError("address not recognized, this wallet currently supports the following address types: p2pkh, p2wsh, p2wpkh")
+                return
+        except ValueError:
+            raise TransactionConstructionError("invalid address")
+        target_amount = values[i]
+        my_tx_outs.append(TxOut(amount=target_amount, script_pubkey=target_script))
+        total_amount += target_amount
+
     balance = get_balance(username, unconfirmed=True)
     if total_amount > (balance[0] + balance[1]):
-        print("Insufficient funds")
-        return None
+        raise TransactionConstructionError("Insufficient funds")
     elif total_amount > balance[0]:
-        print("Currently insufficient funds, waiting for more transactions to confirm")
-        return None
+        raise TransactionConstructionError("Currently insufficient funds, waiting for more transactions to confirm")
 
     my_tx_ins = []
     my_wallets = []
@@ -133,6 +114,7 @@ def multi_send(username, online=True):
             break
 
     if used_amount > total_amount:
+        needs_change = True
         change_address = make_address(username)
         change_h160 = decode_base58(change_address)
         change_script = p2pkh_script(change_h160)
@@ -150,27 +132,23 @@ def multi_send(username, online=True):
         sec = private_key.point.sec()
         script_sig = Script([sig, sec])
         tx_obj.tx_ins[i].script_sig = script_sig
-    
-    print("hex serialization: ")
-    print(tx_obj.serialize().hex())
-    print("transaction id")
-    print(tx_obj.id())
 
-    self_broadcast = None
+    return tx_obj, True, used_utxos
+
+def broadcast_transaction(tx_obj, online, self_broadcast, needs_change, username, used_utxos):
     if online:
         node = SimpleNode(HOST, testnet=True, logging=False)
         node.handshake()
         node.send(tx_obj)
-        print('tx sent!')
-        self_broadcast = 'n'
-    else:
-        while self_broadcast != 'n' and self_broadcast != 'y':
-            self_broadcast = input("Did you broadcast this transaction yourself?[y/n]")
 
     if online or self_broadcast == 'y':
         for utxo in used_utxos:
             tx_set_flag(username, utxo, TXOState.UNCONFIRMED_STXO.value)
     
-        if 'change_address' in locals():
-            change_index = len(tx_obj.tx_outs) - 1 
+        if needs_change:
+            change_index = len(tx_obj.tx_outs) - 1
+            change_out = tx_obj.tx_outs[change_index]
+            change_amount = change_out.amount
+            change_script = change_out.script_pubkey
+            change_address = change_script.address(testnet=True)
             tx_set_new(username, tx_obj.id(), change_index, change_amount, change_address, change_script, "0")
