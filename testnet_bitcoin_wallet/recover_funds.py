@@ -29,12 +29,7 @@ from jbok import get_addr
 TESTNET_GENESIS_BLOCK = bytes.fromhex("000000000933ea01ad0ee984209779baaec3ced90fa3f408719526f8d77f4943")
 WALLET_START_BLOCK = bytes.fromhex("0000000062043fb2e5091e43476e485ddc5d726339fd12bb010d5aeaf2be8206")
 
-try:
-    from network_settings import HOST
-except (ModuleNotFoundError, ImportError):
-    with open("network_settings.py", "w") as net_file:
-        net_file.write('HOST = "testnet.programmingbitcoin.com"')
-        HOST = 'testnet.programmingbitcoin.com'
+HOST = get_node()
 
 class RecoverFundsError(Exception):
     pass

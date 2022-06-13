@@ -24,12 +24,18 @@ class TXOState(Enum):
     UNCONFIRMED_STXO = "2"
     CONFIRMED_STXO = "3"
 
-try:
-    from network_settings import HOST
-except (ModuleNotFoundError, ImportError):
+def set_node(new_host):
     with open("network_settings.py", "w") as net_file:
-        net_file.write('HOST = "testnet.programmingbitcoin.com"')
-        HOST = 'testnet.programmingbitcoin.com'
+        net_file.write(f"HOST = '{new_host}'")
+
+def get_node():
+    try:
+        from network_settings import HOST
+        return HOST
+    except (ModuleNotFoundError, ImportError):
+        HOST = "testnet.programmingbitcoin.com"
+        set_node(HOST)
+        return HOST
 
 logging.basicConfig(filename='block.log', format='%(levelname)s:%(message)s', level=logging.DEBUG)
 

@@ -4,7 +4,7 @@ from enum import Enum
 from jbok import get_tpub, get_tprv, make_address
 from network_interface import is_online
 from block_logger import initial_connect
-from block_utils import is_synched, is_valid_node
+from block_utils import is_synched, is_valid_node, set_node
 from stx import get_balance, construct_transaction, broadcast_transaction, TransactionConstructionError, get_balance
 from tx_history import get_tx_history
 
@@ -38,8 +38,7 @@ def change_node(out_func, in_func):
     out_func("Note: confirmation may take ~1 minute")
     new_host = in_func(["New node"])[0]
     if is_valid_node(new_host):
-        with open("network_settings.py", 'w') as net_file:
-            net_file.write(f'HOST = "{new_host}"')
+        set_node(new_host)
         out_func("Please restart your wallet for these changes to take full affect everywhere")
 
 def status(out_func, pipe, lock):

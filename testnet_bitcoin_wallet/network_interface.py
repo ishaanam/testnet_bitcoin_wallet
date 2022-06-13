@@ -4,15 +4,9 @@ from multiprocessing import Process, Pipe
 
 from ProgrammingBitcoin.network import SimpleNode
 from block_logger import block_syncer, initial_connect
+from block_utils import get_node
 
-try:
-    # if possible, import the HOST variable from network_settings.py
-    from network_settings import HOST
-except (ModuleNotFoundError, ImportError):
-    # otherwise, create network_settings.py and set the HOST variable to the default node
-    with open("network_settings.py", "w") as net_file:
-        HOST = "testnet.programmingbitcoin.com"
-        net_file.write(f"HOST = {HOST}")
+HOST = get_node()
 
 def is_online(pipe, lock):
     p_input, p_output = pipe

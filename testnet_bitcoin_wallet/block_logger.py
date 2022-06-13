@@ -16,14 +16,7 @@ from ProgrammingBitcoin.tx import Tx
 
 from block_utils import * 
 
-try:
-    # if possible, import the HOST variable from network_settings.py
-    from network_settings import HOST
-except (ModuleNotFoundError, ImportError):
-    # otherwise, create network_settings.py and set the HOST variable to the default node
-    with open("network_settings.py", "w") as net_file:
-        HOST = "testnet.programmingbitcoin.com"
-        net_file.write(f"HOST = {HOST}")
+HOST = get_node()
 
 logging.basicConfig(filename='block.log', format='%(levelname)s:%(message)s', level=logging.DEBUG)
 

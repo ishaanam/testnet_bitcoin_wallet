@@ -9,15 +9,10 @@ from ProgrammingBitcoin.network import SimpleNode
 from ProgrammingBitcoin.op import OP_CODE_FUNCTIONS
 
 from jbok import make_address, get_pkobj
-from block_utils import tx_set_flag, tx_set_new, TXOState
+from block_utils import tx_set_flag, tx_set_new, TXOState, get_node
 from segwit import make_p2wx_script, decode_bech32
 
-try:
-    from network_settings import HOST
-except (ModuleNotFoundError, ImportError):
-    with open("network_settings.py", "w") as net_file:
-        net_file.write('HOST = "testnet.programmingbitcoin.com"')
-        from network_settings import HOST
+HOST = get_node()
 
 class TransactionConstructionError(Exception):
     pass
