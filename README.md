@@ -23,7 +23,7 @@ Places I referred to when implementing certain parts of the wallet:
 - [bitcoinlib](https://github.com/1200wd/bitcoinlib)
 
 ### Running The Testnet Wallet
-The wallet recieves blocks and transactions in the background whenever the wallet is being used. Run interface.py to start the wallet.Dependencies: requests, base58, and mnemonic (all these can be installed using pip).
+The wallet recieves blocks and transactions in the background whenever the wallet is being used. Run cli.py to start the wallet. Dependencies: requests, base58, and mnemonic (all these can be installed using pip).
 
 ### Connecting to A Full Node
 You can modify the full node you connect to by using the `change node` command on the wallet and providing it with the full node you would like to connect to.
