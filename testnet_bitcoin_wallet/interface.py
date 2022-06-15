@@ -4,7 +4,7 @@ from enum import Enum
 from jbok import get_tpub, get_tprv, make_address
 from network_interface import is_online
 from block_logger import initial_connect
-from block_utils import is_synched, is_valid_node, set_node
+from block_utils import is_synched, is_valid_node, set_node, InvalidNodeError
 from stx import get_balance, construct_transaction, broadcast_transaction, TransactionConstructionError, get_balance
 from tx_history import get_tx_history
 
@@ -16,7 +16,7 @@ class Colors(Enum):
 
 def balance(out_func, pipe, lock, username):
     # If wallet is not fully synchronized, let them know but still show them their balance so far
-    if not is_online(pipe, lock):
+    if not is_online(pipe, lock, out_func):
         out_func("Please note that your wallet is currently offline so your balance has not been updating.")
     elif is_synched() == False:
         out_func("Please note that your wallet is still in the process of synching with the blockchain.")
@@ -37,13 +37,16 @@ def tprv(out_func, username):
 def change_node(out_func, in_func):
     out_func("Note: confirmation may take ~1 minute")
     new_host = in_func(["New node"])[0]
-    if is_valid_node(new_host):
+    try:
+        is_valid_node(new_host)
         set_node(new_host)
         out_func("Please restart your wallet for these changes to take full affect everywhere")
+    except InvalidNodeError as e:
+        out_func(e)
 
 def status(out_func, pipe, lock):
     # this feature also only works when the wallet is completely synchronized
-    if is_online(pipe, lock):
+    if is_online(pipe, lock, out_func):
         if is_synched():
             out_func("The wallet is fully synchronized with the blockchain")
         else:
@@ -53,7 +56,7 @@ def status(out_func, pipe, lock):
         out_func("You are currently running this wallet offline, so it is not connected to a full node")
 
 def reconnect(out_func, pipe, lock, p_input, p):
-    if is_online(pipe, lock):
+    if is_online(pipe, lock, out_func):
         out_func("Your wallet is already online, there is no need to reconnect")
     else:
         try:
@@ -65,7 +68,7 @@ def reconnect(out_func, pipe, lock, p_input, p):
             out_func("Wallet still failed to connect")
 
 def tx_history(out_func, in_func, pipe, lock, username):
-    online = is_online(pipe, lock)
+    online = is_online(pipe, lock, out_func)
     if not online:
         out_func("Please note that your wallet is not synching with the blockchain right now because you are running this wallet offline")
     elif is_synched() == False:
@@ -93,7 +96,7 @@ def tx_history(out_func, in_func, pipe, lock, username):
 
 def send(out_func, in_func, pipe, lock, username):
     # do not allow user to send transactions until the wallet is fullly synchronized
-    online = is_online(pipe, lock)
+    online = is_online(pipe, lock, out_func)
     if not online:
         out_func("Note: your wallet is currently running offline, so your transaction won't be broadcasted by this wallet")
     if not online or is_synched():
@@ -129,7 +132,7 @@ def send(out_func, in_func, pipe, lock, username):
 
 def storage(out_func, in_func, pipe, lock, username):
     # do not allow user to send transactions until the wallet is fullly synchronized
-    online = is_online(pipe, lock)
+    online = is_online(pipe, lock, out_func)
     if not online:
         out_func("Note: your wallet is currently running offline, so your transaction won't be broadcasted by this wallet")
     elif is_synched() or not online:

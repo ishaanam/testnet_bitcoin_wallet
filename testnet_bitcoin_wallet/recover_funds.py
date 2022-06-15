@@ -22,7 +22,7 @@ from ProgrammingBitcoin.script import p2pkh_script, Script
 from ProgrammingBitcoin.tx import Tx, TxIn, TxOut
 
 from block_utils import *
-from hd import HD_Key
+from hd import HD_Key, InvalidSerializationError
 from jbok import get_addr
 
 
@@ -151,7 +151,12 @@ def recover_funds(username, last_words=None):
     for user in users:
         if user[0] == username:
             tprv = user[2]
-    key = HD_Key.parse_priv(tprv) 
+    try:
+        key = HD_Key.parse_priv(tprv)
+    except InvalidSerializationError as e:
+        print(e)
+        return None
+
     index = 0
     all_addr = []
     

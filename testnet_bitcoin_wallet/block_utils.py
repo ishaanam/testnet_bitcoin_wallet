@@ -24,6 +24,9 @@ class TXOState(Enum):
     UNCONFIRMED_STXO = "2"
     CONFIRMED_STXO = "3"
 
+class InvalidNodeError(Exception):
+    pass
+
 def set_node(new_host):
     with open("network_settings.py", "w") as net_file:
         net_file.write(f"HOST = '{new_host}'")
@@ -55,7 +58,7 @@ def is_valid_node(host):
         node = SimpleNode(host, testnet=True, logging=False)
         return True
     except (socket.gaierror, TimeoutError, ConnectionRefusedError):
-        print("That appears to be an invalid node please try another node or keep using the previous node.")
+        raise InvalidNodeError("That appears to be an invalid node please try another node or keep using the previous node.")
         return False
 
 # reads from block_log.csv and returns the specified block hash

@@ -8,13 +8,13 @@ from block_utils import get_node
 
 HOST = get_node()
 
-def is_online(pipe, lock):
+def is_online(pipe, lock, out_func):
     p_input, p_output = pipe
     msg = p_output.recv()
     online = msg[0] 
     if not online and msg[2]:
-        print(msg[1])
-        print("Please ensure that your wallet and node are both online. In the mean time, your wallet is running in offline mode. This means that you cannot do things like broadcast transactions(though you can still create them) or download utxos. Once you restore connection, run 'reconnect'.")
+        out_func(msg[1])
+        out_func("Please ensure that your wallet and node are both online. In the mean time, your wallet is running in offline mode. This means that you cannot do things like broadcast transactions(though you can still create them) or download utxos. Once you restore connection, run 'reconnect'.")
     
     lock.acquire()
     try:

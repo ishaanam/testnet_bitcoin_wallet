@@ -10,6 +10,12 @@ import math
 
 num = 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364141
 
+class InvalidKeyError(Exception):
+    pass
+
+class InvalidSerializationError(Exception):
+    pass
+
 def get_birthday():
     # storing the wallet birthday in this manner will work for around 5.6 years before we run out of words
     start_block = 2164464
@@ -61,8 +67,7 @@ class HD_Key(PrivateKey):
         key = i[:32]
         chain = i[32:]
         if (int.from_bytes(key, 'big') == 0) or (int.from_bytes(key, 'big') >= num):
-            print("invalid key generated")
-            return None
+            raise InvalidKeyError()
         else:
             return cls(level, fingerprint, index, key.hex(), chain.hex(), testnet)
     
@@ -119,8 +124,7 @@ class HD_Key(PrivateKey):
         elif version == "tprv":
             testnet = True
         else:
-            print("invalid private key serialization")
-            return None
+            raise InvalidSerializationError("invalid private key serialization")
         s = base58.b58decode(s).hex()
         s = s[8:]
         level = s[:2]
@@ -141,6 +145,12 @@ class HD_Key(PrivateKey):
     @staticmethod
     def new_tprv():
         seed = new_mnemonic()
-        tprv = HD_Key.new_master_key("00", "00000000", "00000000", seed, testnet=True)
+        no_tprv = True
+        while no_tprv:
+            try:
+                tprv = HD_Key.new_master_key("00", "00000000", "00000000", seed, testnet=True)
+                no_tprv = False
+            except InvalidKeyError:
+                pass
         return tprv.serialize(priv=True) 
 
