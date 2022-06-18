@@ -40,6 +40,8 @@ def get_node():
         set_node(HOST)
         return HOST
 
+HOST = get_node()
+
 logging.basicConfig(filename='block.log', format='%(levelname)s:%(message)s', level=logging.DEBUG)
 
 # If block_log.csv file doesn't exist, this function will create one

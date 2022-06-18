@@ -4,3 +4,4 @@ __pycache__/
 *.log
 *.swp
 network_settings.py
+online.txt

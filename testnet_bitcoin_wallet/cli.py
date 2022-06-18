@@ -1,6 +1,6 @@
 import signal
 import socket
-from multiprocessing import Process, Pipe, Lock
+from multiprocessing import Lock, Process
 
 from user_manager import has_login
 from block_utils import is_synched, get_known_height, handler, is_valid_node, start_log
@@ -15,20 +15,18 @@ def cli_input(requests):
         results.append(cl_in)
     return results
 
-def run_wallet(p, pipe, lock):
+def run_wallet(p, lock):
     print("NOTE: this wallet only operates on the testnet, enter 'sign out' to log into a different account and 'quit' to exit.")
 
     # ask user to login and obtain their username
     username = has_login()
     print("I can: calculate your current balance[balance], send transactions[send], recieve transactions[recieve], check if your wallet is fully synchronized with the blockchain[status], send all of your testnet bitcoin in all accounts to a specified address[storage], change the full node you get information from[change node], display your full transaction history[tx history] and get your extended public key [tpub] or your extended private key[tprv]")
 
-    p_input, p_output = pipe
     try:
         initial_connect()
         p.start()
     except ConnectionRefusedError as e:
-        p_input.send([False, e, True])
-    # initial_connect()
+        set_online(lock, ["False", str(e), "False"])
 
     active = True
     # until user enters "quit"
@@ -37,7 +35,7 @@ def run_wallet(p, pipe, lock):
 
         # send transaction
         if option == "send":
-            send(print, cli_input, pipe, lock, username)
+            send(print, cli_input, lock, username)
 
         # generate address for user to recieve funds
         elif option == "recieve":
@@ -45,7 +43,7 @@ def run_wallet(p, pipe, lock):
 
         # See balance (both confirmed and unconfirmed)
         elif option == "balance":
-            balance(print, pipe, lock, username)
+            balance(print, lock, username)
 
         elif option == "tpub":
             tpub(print, username)
@@ -58,18 +56,18 @@ def run_wallet(p, pipe, lock):
 
         # allow user to send all funds in all accounts to a single address
         elif option == "storage":
-            storage(print, cli_input, pipe, lock, username)
+            storage(print, cli_input, lock, username)
 
         # checks how far the wallet it synchronized
         elif option == "status":
-            status(print, pipe, lock)
+            status(print, lock)
 
         # show the user their full transaction history
         elif option == "tx history":
-            tx_history(print, cli_input, pipe, lock, username)
+            tx_history(print, cli_input, lock, username)
 
         elif option == "reconnect":
-            reconnect(print, pipe, lock, cli_input, p)
+            reconnect(print, lock, p)
 
         # allow user to sign into a different account
         elif option == "sign out":
@@ -84,10 +82,9 @@ def run_wallet(p, pipe, lock):
 
 if __name__ == '__main__':
     lock = Lock()
-    p_input, p_output = Pipe()
-    p = Process(target=run_network_interface, args=(p_input,lock))
+    p = Process(target=run_network_interface, args=(lock,))
     try:
-        run_wallet(p, (p_input, p_output), lock)
+        run_wallet(p, lock)
     except KeyboardInterrupt:
         try:
             p.terminate()

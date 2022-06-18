@@ -2,9 +2,9 @@ from socket import gaierror
 from enum import Enum
 
 from jbok import get_tpub, get_tprv, make_address
-from network_interface import is_online
+from network_interface import is_online, set_online
 from block_logger import initial_connect
-from block_utils import is_synched, is_valid_node, set_node, InvalidNodeError
+from block_utils import is_synched, is_valid_node, set_node, InvalidNodeError, get_known_height
 from stx import get_balance, construct_transaction, broadcast_transaction, TransactionConstructionError, get_balance
 from tx_history import get_tx_history
 
@@ -14,9 +14,9 @@ class Colors(Enum):
     YELLOW = '\033[93m'
     END = '\033[0m'
 
-def balance(out_func, pipe, lock, username):
+def balance(out_func, lock, username):
     # If wallet is not fully synchronized, let them know but still show them their balance so far
-    if not is_online(pipe, lock, out_func):
+    if not is_online(lock, out_func):
         out_func("Please note that your wallet is currently offline so your balance has not been updating.")
     elif is_synched() == False:
         out_func("Please note that your wallet is still in the process of synching with the blockchain.")
@@ -44,9 +44,9 @@ def change_node(out_func, in_func):
     except InvalidNodeError as e:
         out_func(e)
 
-def status(out_func, pipe, lock):
+def status(out_func, lock):
     # this feature also only works when the wallet is completely synchronized
-    if is_online(pipe, lock, out_func):
+    if is_online(lock, out_func):
         if is_synched():
             out_func("The wallet is fully synchronized with the blockchain")
         else:
@@ -55,20 +55,20 @@ def status(out_func, pipe, lock):
     else:
         out_func("You are currently running this wallet offline, so it is not connected to a full node")
 
-def reconnect(out_func, pipe, lock, p_input, p):
-    if is_online(pipe, lock, out_func):
+def reconnect(out_func, lock, p):
+    if is_online(lock, out_func):
         out_func("Your wallet is already online, there is no need to reconnect")
     else:
         try:
             initial_connect()
-            p_input.send([True, "", True])
+            set_online(lock, ["True", "", "True"])
             p.start()
             out_func("Successfully connected to full node")
         except (gaierror, ConnectionRefusedError):
             out_func("Wallet still failed to connect")
 
-def tx_history(out_func, in_func, pipe, lock, username):
-    online = is_online(pipe, lock, out_func)
+def tx_history(out_func, in_func, lock, username):
+    online = is_online(lock, out_func)
     if not online:
         out_func("Please note that your wallet is not synching with the blockchain right now because you are running this wallet offline")
     elif is_synched() == False:
@@ -94,9 +94,9 @@ def tx_history(out_func, in_func, pipe, lock, username):
             out_func(f"Confirmation Status: {Colors.RED.value}{tx[2]}{Colors.END.value}")
         out_func(f"# of Confirmations: {tx[3]}")
 
-def send(out_func, in_func, pipe, lock, username):
+def send(out_func, in_func, lock, username):
     # do not allow user to send transactions until the wallet is fullly synchronized
-    online = is_online(pipe, lock, out_func)
+    online = is_online(lock, out_func)
     if not online:
         out_func("Note: your wallet is currently running offline, so your transaction won't be broadcasted by this wallet")
     if not online or is_synched():
@@ -130,9 +130,9 @@ def send(out_func, in_func, pipe, lock, username):
     else:
         out_func("Your wallet is currently in the process of synching with the blockchain. Please try again later.")
 
-def storage(out_func, in_func, pipe, lock, username):
+def storage(out_func, in_func, lock, username):
     # do not allow user to send transactions until the wallet is fullly synchronized
-    online = is_online(pipe, lock, out_func)
+    online = is_online(lock, out_func)
     if not online:
         out_func("Note: your wallet is currently running offline, so your transaction won't be broadcasted by this wallet")
     elif is_synched() or not online:
