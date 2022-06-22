@@ -27,6 +27,9 @@ class TXOState(Enum):
 class InvalidNodeError(Exception):
     pass
 
+class UTXONotFoundError(Exception):
+    pass
+
 def set_node(new_host):
     with open("network_settings.py", "w") as net_file:
         net_file.write(f"HOST = '{new_host}'")
@@ -317,7 +320,7 @@ def tx_set_new(user, tx_id, index, amount, address, scriptPubKey, block_hash):
         w.writerow([tx_id, index, amount, address, scriptPubKey, block_hash, TXOState.UNCONFIRMED_UTXO.value])
 
 # set tx flag to 1
-def tx_set_confirmed(user, tx_id, index, amount, address, scriptPubKey, block_hash):
+def tx_set_confirmed(user, tx_id, index=None, amount=None, address=None, scriptPubKey=None, block_hash=None):
     with open(f"{user}_utxos.csv", 'r') as utxo_file:
         r = csv.reader(utxo_file)
         utxos = list(r)
@@ -328,8 +331,10 @@ def tx_set_confirmed(user, tx_id, index, amount, address, scriptPubKey, block_ha
     if existing_index != None:
         utxos[existing_index][6] = TXOState.CONFIRMED_UTXO.value
         utxos[existing_index][5] = block_hash
-    else:
+    elif existing_index == None and address:
         utxos.append([tx_id, index, amount, address, scriptPubKey, block_hash, TXOState.CONFIRMED_UTXO.value])
+    else:
+        raise UTXONotFoundError("Unable to find unconfirmed utxo to set as confirmed")
     with open(f"{user}_utxos.csv", 'w', newline="") as utxo_file:
         w = csv.writer(utxo_file)
         w.writerows(utxos)
