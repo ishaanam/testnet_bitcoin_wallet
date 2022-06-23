@@ -62,7 +62,7 @@ def block_syncer(node):
             for block in headers.blocks:
                 if not block.check_pow():
                    raise RuntimeError('pow is invalid')
-                logging.info(f"recieved block: {block.hash().hex()}")
+                logging.info(f"received block: {block.hash().hex()}")
                 getdata.add_data(FILTERED_BLOCK_DATA_TYPE, block.hash())
                 all_blocks = all_hashes()
                 if block.hash().hex() in all_blocks:
@@ -75,7 +75,7 @@ def block_syncer(node):
             node.send(getdata)
             signal.signal(signal.SIGALRM, handler)
             signal.alarm(40)
-            # for 40 seconds, see if we recieve any relevant transactions
+            # for 40 seconds, see if we receive any relevant transactions
             try:
                 while True:
                     try:
@@ -99,14 +99,14 @@ def block_syncer(node):
                                         block = get_block_hex(merkle_block)
                                         # set the transaction as confirmed in the corresponding user's file
                                         tx_set_confirmed(r_user, prev_tx, prev_index, prev_amount, addr, locking_script, block)
-                                        logging.info(f"{r_user} recieved {prev_amount} satoshis")
+                                        logging.info(f"{r_user} received {prev_amount} satoshis")
                             # check for any transaction inputs indicating we have spent funds
                             for i, tx_in in enumerate(message.tx_ins):
                                 for tx_id in ids:
                                     if tx_id[0] == tx_in.prev_tx.hex() and int(tx_id[1]) == tx_in.prev_index:
                                         tx_set_flag(tx_id[2], tx_id[0], TXOState.CONFIRMED_STXO.value, tx_id[1])
                     except SyntaxError:
-                        logging.info("recieved an invalid script")
+                        logging.info("received an invalid script")
             except RuntimeError:
                 pass
 

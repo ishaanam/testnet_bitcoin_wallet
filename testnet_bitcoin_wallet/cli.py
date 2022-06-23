@@ -20,7 +20,7 @@ def run_wallet(p, lock):
 
     # ask user to login and obtain their username
     username = has_login()
-    print("I can: calculate your current balance[balance], send transactions[send], recieve transactions[recieve], check if your wallet is fully synchronized with the blockchain[status], send all of your testnet bitcoin in all accounts to a specified address[storage], change the full node you get information from[change node], display your full transaction history[tx history] and get your extended public key [tpub] or your extended private key[tprv]")
+    print("I can: calculate your current balance[balance], send transactions[send], receive transactions[receive], check if your wallet is fully synchronized with the blockchain[status], send all of your testnet bitcoin in all accounts to a specified address[storage], change the full node you get information from[change node], display your full transaction history[tx history] and get your extended public key [tpub] or your extended private key[tprv]")
 
     try:
         initial_connect()
@@ -37,9 +37,9 @@ def run_wallet(p, lock):
         if option == "send":
             send(print, cli_input, lock, username)
 
-        # generate address for user to recieve funds
-        elif option == "recieve":
-            recieve(print, username)
+        # generate address for user to receive funds
+        elif option == "receive":
+            receive(print, username)
 
         # See balance (both confirmed and unconfirmed)
         elif option == "balance":

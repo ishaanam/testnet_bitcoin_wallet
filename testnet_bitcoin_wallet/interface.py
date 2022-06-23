@@ -25,7 +25,7 @@ def balance(out_func, lock, username):
     if balance[1] != 0:
         out_func(f"You also have an additional unconfirmed balance of {balance[1]} Satoshis")
 
-def recieve(out_func, username):
+def receive(out_func, username):
     out_func(f"Here is your testnet address: {make_address(username)}")
 
 def tpub(out_func, username):

@@ -130,7 +130,7 @@ def recover_batch(r_user, node, current_addr, height):
                                     locking_script = tx_out.script_pubkey
                                     block = get_block_hex(merkle_block)
                                     tx_set_confirmed(r_user, prev_tx, prev_index, prev_amount, addr, locking_script, block)
-                                    logging.info(f"{r_user} recieved {prev_amount} satoshis")
+                                    logging.info(f"{r_user} received {prev_amount} satoshis")
                         for i, tx_in in enumerate(message.tx_ins):
                             for tx_id in ids:
                                 if tx_id[0] == tx_in.prev_tx.hex() and int(tx_id[1]) == tx_in.prev_index:

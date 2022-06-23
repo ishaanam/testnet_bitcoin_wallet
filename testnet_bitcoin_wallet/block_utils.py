@@ -384,7 +384,7 @@ def input_parser(current_addr, node):
                             if tx_id[0] == tx_in.prev_tx.hex() and int(tx_id[1]) == tx_in.prev_index:
                                 tx_set_flag(tx_id[2], tx_id[0], TXOState.CONFIRMED_STXO.value, tx_id[1])
         except SyntaxError:
-            logging.info("recieved an invalid script")
+            logging.info("received an invalid script")
 
 # reorg given the fork file
 def reorg(fork):
