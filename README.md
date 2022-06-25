@@ -8,7 +8,7 @@ Overtime I've implemented the following features in this wallet:
 - broadcasting transactions from the node, receiving transactions and updating balance, some reorg safety(especially because reorgs are larger and more frequent on the testnet)
 - non-hardened child key derivation, so basically implementing part of [BIP-32](https://github.com/bitcoin/bips/blob/master/bip-0032.mediawiki)
 - sending to segwit version 0 addresses
-- additional functionality when walet is offline or not fully synchronized, basically an "offline mode"
+- additional functionality when wallet is offline or not fully synchronized, basically an "offline mode"
 
 In-Progress:
 - receiving to segwit version 0 addresses
