@@ -25,7 +25,7 @@ def run_wallet(p, lock):
     try:
         initial_connect()
         p.start()
-    except ConnectionRefusedError as e:
+    except (ConnectionRefusedError, socket.gaierror) as e:
         set_online(lock, ["False", str(e), "False"])
 
     active = True
