@@ -1,8 +1,9 @@
 import signal
 import socket
 from multiprocessing import Lock, Process
+from getpass import getpass
 
-from user_manager import has_login
+from interface import user_login
 from block_utils import is_synched, get_known_height, handler, is_valid_node, start_log
 from block_logger import initial_connect
 from network_interface import *
@@ -22,8 +23,8 @@ def run_wallet(p, lock):
     print("NOTE: this wallet only operates on the testnet, enter 'sign out' to log into a different account and 'quit' to exit.")
 
     # ask user to login and obtain their username
-    username = has_login()
-    print("I can: calculate your current balance[balance], send transactions[send], receive transactions[receive], check if your wallet is fully synchronized with the blockchain[status], send all of your testnet bitcoin in all accounts to a specified address[storage], change the full node you get information from[change node], display your full transaction history[tx history] and get your extended public key [tpub] or your extended private key[tprv]")
+    username = user_login(print, cli_input, getpass)
+    print("This wallet can: calculate your current balance[balance], send transactions[send], recieve transactions[receive], check if your wallet is fully synchronized with the blockchain[status], send all of your testnet bitcoin in all accounts to a specified address[storage], change the full node you get information from[change node], display your full transaction history[tx history] and get your extended public key [tpub] or your extended private key[tprv]")
 
     try:
         initial_connect()
@@ -74,7 +75,7 @@ def run_wallet(p, lock):
 
         # allow user to sign into a different account
         elif option == "sign out":
-            username = has_login()
+            username = user_login(print, cli_input, getpass)
 
         elif option == "quit":
              active = False

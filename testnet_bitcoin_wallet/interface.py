@@ -7,6 +7,8 @@ from block_logger import initial_connect
 from block_utils import is_synched, is_valid_node, set_node, InvalidNodeError, get_known_height
 from stx import get_balance, construct_transaction, broadcast_transaction, TransactionConstructionError, get_balance
 from tx_history import get_tx_history
+from user_manager import sign_in, create_user, RecoverFundsError, SignInError, UserCreationError
+from hd import InvalidSerializationError
 
 class Colors(Enum):
     PURPLE = '\033[94m'
@@ -160,3 +162,46 @@ def storage(out_func, in_func, lock, username):
     else:
         out_func("Your wallet is currently in the process of synching with the blockchain. Please try again later.")
 
+def user_login(out_func, in_func, password_in_func):
+    signed_in = False
+    while not signed_in:
+        account = in_func("Do you already have an account?[y/n]")
+        if account == "y":
+            while not signed_in:
+                try:
+                    username = in_func("username")
+                    password = password_in_func("password: ")
+                    signed_in = sign_in(username, password)
+                    out_func(f"You are now successfully logged in {username}")
+                    return username
+                except SignInError as e:
+                    out_func(e)
+        elif account == "n":
+            words = None
+            tprv = None
+            try:
+                username = in_func("username")
+                password = password_in_func("password: ")
+                confirm_password = password_in_func(prompt="confirm password: ")
+
+                if password != confirm_password:
+                    out_func("The passwords don't match")
+
+                recover = in_func("Would you like to recover a testnet wallet?[y/n]") == 'y'
+                if recover:
+                    recover_tprv = in_func("Would you like to recover your wallet from a tprv or your seed phrase?[tprv/seed phrase]") == "tprv"
+                    if recover_tprv:
+                        tprv = in_func("tprv")
+                    else:
+                        words = in_func("words")
+                try:
+                    create_user(username, password, out_func, password_in_func, words, tprv)
+                except UserCreationError as e:
+                    out_func(e)
+                signed_in = True
+                out_func(f"You are now successfully logged in {username}")
+                return username
+            except (RecoverFundsError, InvalidSerializationError) as e:
+                out_func(e)
+        else:
+            out_func("Please enter y or n.")

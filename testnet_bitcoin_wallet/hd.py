@@ -34,19 +34,7 @@ def get_birthday():
 def new_mnemonic():
     mnemo = Mnemonic('english')
     words = mnemo.generate(strength=128)
-    # uncommented once segwit is implemented in this wallet
-    # version = input("Would you like legacy or segwit addresses?[legacy/segwit]: ")
-    # if version == "segwit":
-        # version_word = "ability"
-    # else:
-        # version_word = "abandon"
-    version_word = "abandon"
-    new_words = words +  f" {version_word}" 
-    new_words += f" {get_birthday()}" 
-    print(new_words)
-    passphrase = getpass.getpass(prompt="Passphrase(if none just enter): ")
-    seed = mnemo.to_seed(words, passphrase=passphrase)
-    return seed
+    return words, mnemo
 
 class HD_Key(PrivateKey):
     def __init__(self, level, fingerprint, index, k, c, testnet=False):
@@ -143,8 +131,11 @@ class HD_Key(PrivateKey):
         return key.serialize(priv=True)
     
     @staticmethod
-    def new_tprv():
-        seed = new_mnemonic()
+    def new_tprv(out_func, password_in_func):
+        words, mnemo = new_mnemonic()
+        out_func(words)
+        passphrase = password_in_func("Passphrase(if none just enter): ")
+        seed = mnemo.to_seed(words, passphrase=passphrase)
         no_tprv = True
         while no_tprv:
             try:
