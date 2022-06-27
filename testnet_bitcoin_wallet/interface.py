@@ -36,7 +36,7 @@ def tprv(out_func, username):
 
 def change_node(out_func, in_func):
     out_func("Note: confirmation may take ~1 minute")
-    new_host = in_func(["New node"])[0]
+    new_host = in_func("New node")
     try:
         is_valid_node(new_host)
         set_node(new_host)
@@ -73,7 +73,7 @@ def tx_history(out_func, in_func, lock, username):
         out_func("Please note that your wallet is not synching with the blockchain right now because you are running this wallet offline")
     elif is_synched() == False:
         out_func("Please note that your wallet is still in the process of synching with the blockchain.")
-    option = in_func(["Would you like to see unconfirmed unspent transaction outputs as well[y/n]"])[0]
+    option = in_func("Would you like to see unconfirmed unspent transaction outputs as well[y/n]")
 
     if option == "y":
         show_unconfirmed = True
@@ -101,7 +101,7 @@ def send(out_func, in_func, lock, username):
         out_func("Note: your wallet is currently running offline, so your transaction won't be broadcasted by this wallet")
     if not online or is_synched():
 
-        num_r = int(in_func(["Number of recipients"])[0])
+        num_r = int(in_func("Number of recipients"))
 
         recipients = []
         values = []
@@ -120,7 +120,7 @@ def send(out_func, in_func, lock, username):
 
             self_broadcast = None
             while self_broadcast != 'n' and self_broadcast != 'y':
-                self_broadcast = in_func(["Did you broadcast this transaction yourself?[y/n]"])[0]
+                self_broadcast = in_func("Did you broadcast this transaction yourself?[y/n]")
 
             broadcast_transaction(tx_obj, online, self_broadcast, needs_change, username, used_utxos)
         except TransactionConstructionError as e:
@@ -153,7 +153,7 @@ def storage(out_func, in_func, lock, username):
         self_broadcast = None
 
         while self_broadcast != 'n' and self_broadcast != 'y':
-            self_broadcast = in_func(["Did you broadcast this transaction yourself?[y/n]"])[0]
+            self_broadcast = in_func("Did you broadcast this transaction yourself?[y/n]")
 
         broadcast_transaction(tx_obj, online, self_broadcast, needs_change, username)
 

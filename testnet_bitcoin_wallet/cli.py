@@ -9,6 +9,9 @@ from network_interface import *
 from interface import *
 
 def cli_input(requests):
+    if type(requests) == str:
+        results = input(f"{requests}: ")
+        return results
     results = []
     for request in requests:
         cl_in = input(f"{request}: ")
