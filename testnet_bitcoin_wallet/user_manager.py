@@ -3,7 +3,9 @@ from hashlib import sha256
 
 from block_utils import get_all_users
 from hd import HD_Key, InvalidSerializationError
-from recover_funds import recover_funds, RecoverFundsError
+
+class RecoverFundsError(Exception):
+    pass
 
 class SignInError(Exception):
     pass
