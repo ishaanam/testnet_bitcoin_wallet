@@ -6,7 +6,7 @@ def get_tx_history(username, online, show_unconfirmed=False):
     if online:
         synched = is_synched()
     tx_history = []
-    latest_height = int(get_known_height())
+    latest_height = get_known_height()
     with open(f"{username}_utxos.csv", 'r') as utxo_file:
         r = csv.reader(utxo_file)
         txs = list(r)

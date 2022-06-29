@@ -32,6 +32,6 @@ def run_network_interface(lock):
     try:
         node = SimpleNode(HOST, testnet=True, logging=False)
         set_online(lock, ["True", "", "True"])
-        block_syncer(node)
+        block_syncer()
     except (socket.gaierror, ConnectionRefusedError) as e:
         set_online(lock, ["False", str(e), "False"])

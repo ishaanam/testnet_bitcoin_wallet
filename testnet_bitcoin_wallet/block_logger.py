@@ -24,7 +24,7 @@ def initial_connect():
     node = SimpleNode(HOST, testnet=True, logging=False)
     node.handshake()
 
-def block_syncer(node):
+def block_syncer():
     node = SimpleNode(HOST, testnet=True, logging=False)
     node.handshake()
     # As long as wallet is running
@@ -83,7 +83,7 @@ def block_syncer(node):
                         if message.command == b'merkleblock':
                             merkle_block = message
                             if not message.is_valid():
-                                raise RuntimeError('inalid merkle proof')
+                                raise RuntimeError('invalid merkle proof')
                         else:
                             message.testnet = True
                             ids = get_all_ids()

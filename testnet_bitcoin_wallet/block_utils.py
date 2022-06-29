@@ -64,7 +64,6 @@ def is_valid_node(host):
         return True
     except (socket.gaierror, TimeoutError, ConnectionRefusedError):
         raise InvalidNodeError("That appears to be an invalid node please try another node or keep using the previous node.")
-        return False
 
 # reads from block_log.csv and returns the specified block hash
 def read_log(block_number):
@@ -77,21 +76,23 @@ def read_log(block_number):
 def get_latest_block_hash():
     node = SimpleNode(HOST, testnet=True, logging=False)
     node.handshake()
-    start_block = bytes.fromhex(read_log(-2))
+    start_block = bytes.fromhex(read_log(-1))
 
     getheaders = GetHeadersMessage(start_block=start_block)
     node.send(getheaders)
 
     headers = node.wait_for(HeadersMessage)
-    last_block = None 
     
-    return headers.blocks[-1].hash().hex()
+    try:
+        return headers.blocks[-1].hash().hex()
+    except IndexError:
+        return get_known_hash()
 
 def get_known_height():
     with open("block_log.csv", "r") as block_log:
         r = csv.reader(block_log)
         blocks = list(r)
-    return blocks[-1][1]
+    return int(blocks[-1][1])
 
 def get_known_hash():
     with open('block_log.csv', 'r') as block_log:
