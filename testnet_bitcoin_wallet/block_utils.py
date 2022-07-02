@@ -18,6 +18,8 @@ from ProgrammingBitcoin.tx import Tx
 from ProgrammingBitcoin.bloomfilter import BloomFilter
 from ProgrammingBitcoin.merkleblock import MerkleBlock
 
+REORG_LEN = 1
+
 class TXOState(Enum):
     UNCONFIRMED_UTXO = "0"
     CONFIRMED_UTXO = "1"
@@ -28,6 +30,9 @@ class InvalidNodeError(Exception):
     pass
 
 class UTXONotFoundError(Exception):
+    pass
+
+class ChainBrokenError(Exception):
     pass
 
 def set_node(new_host):
@@ -239,93 +244,29 @@ def tx_set_flag(user, tx_id, flag, index=None, block_height=None, block_hash=Non
         w = csv.writer(utxo_file)
         w.writerows(utxos)
 
-def input_parser(current_addr, node):
-    while True:
-        try:
-            message = node.wait_for(MerkleBlock, Tx)
-            if message.command == b'merkleblock':
-                merkle_block = message
-                if not message.is_valid():
-                    raise RuntimeError('invalid merkle proof')
-            else:
-                message.testnet = True
-                ids = get_all_ids()
-                for i, tx_out in enumerate(message.tx_outs):
-                    for addr in current_addr:
-                        if tx_out.script_pubkey.address(testnet=True) == addr:
-                            prev_tx = message.hash().hex()
-                            r_user = find_user(addr)
-                            if prev_tx in old_utxos:
-                                tx_set_flag(r_user,prev_tx, TXOState.CONFIRMED_UTXO.value)
-                                old_utxos.remove(prev_tx)
-                            else:
-                                prev_index = i
-                                prev_amount = tx_out.amount
-                                locking_script = tx_out.script_pubkey
-                                block = get_block_hex(merkle_block)
-                                tx_set_confirmed(r_user, prev_tx, index, prev_amount, addr, locking_script, block)
-                    for i, tx_in in enumerate(message.tx_ins):
-                        for tx_id in ids:
-                            if tx_id[0] == tx_in.prev_tx.hex() and int(tx_id[1]) == tx_in.prev_index:
-                                tx_set_flag(tx_id[2], tx_id[0], TXOState.CONFIRMED_STXO.value, tx_id[1])
-        except SyntaxError:
-            logging.info("received an invalid script")
+def reorg():
+    with open("block_log.csv", "r") as block_file:
+        r = csv.reader(block_file)
+        old_blocks = list(r)
+    removed_blocks = old_blocks[-REORG_LEN:]
+    new_blocks = old_blocks[:-REORG_LEN]
 
-# reorg given the fork file
-def reorg(fork):
-    node = SimpleNode(HOST, testnet=True, logging=False)
-    with open(fork, "r") as fork_file:
-        r = csv.reader(fork_file)
-        fork_file= list(r)
-        forking_point = fork_file[0]
-    
-    with open("block_log.csv", "r") as main_file:
-        r = csv.reader(main_file)
-        main_file = list(r)
-    
-    new_blocks = fork_file[1:]
-    fork_file = [fork_file[0]]
-    fork_len = len(new_blocks)
-    main_len = len(main_file) - main_file.index(forking_point) - 1
-    old_blocks = main_file[-main_len:]
-    main_file= main_file[:-main_len]
-    main_file = main_file + new_blocks 
-    fork_file = fork_file + old_blocks
+    with open("block_log.csv", "w", newline="") as block_file:
+        w = csv.writer(block_file)
+        w.writerows(new_blocks)
 
-    # replace blocks in block file and fork file
-    with open(fork, "w", newline="") as file:
-        w = csv.writer(file)
-        w.writerows(fork_file)
-    with open("block_log.csv", "w", newline="") as file:
-        w = csv.writer(file)
-        w.writerows(main_file)
-    old = [block[0] for block in old_blocks]
-    # unconfirm utxos mined in blocks that were reorged out
-    for user in get_all_users():
-        old_utxos = []
+    fork_block_height = int(removed_blocks[0][1])
+    return fork_block_height
+
+def restore_transaction_states(fork_block_height, node=None):
+    if not node:
+        node = SimpleNode(HOST, testnet=True, logging=False)
+    users = get_all_users()
+    for user in users:
         with open(f"{user}_utxos.csv", 'r') as utxo_file:
             r = csv.reader(utxo_file)
             utxos = list(r)
             for utxo in utxos:
-                if utxo[5] in old:
-                    old_utxos.append(utxo[0])
-                    tx_set_flag(user, utxo[0], TXOState.UNCONFIRMED_UTXO.value)
-    # get utxos mined in the new blocks and figure out if any users have been double-spent 
-    current_addr = get_all_addr()
-    bf = BloomFilter(size=30, function_count=5, tweak=1729)
-    for addr in current_addr:
-        bf.add(decode_base58(addr))
-    node.send(bf.filterload())
-    getdata = GetDataMessage()
-
-    for block in new_blocks:
-        getdata.add_data(FILTERED_BLOCK_DATA_TYPE, bytes.fromhex(block[0]))
-    node.send(getdata)
-    signal.signal(signal.SIGALRM, handler)
-    signal.alarm(10)
-    try:
-        input_parser(current_addr, node)
-    except RuntimeError:
-        logging.info(f"a reorg of {main_len} blocks has occured")
-        if old_utxos != []:
-            logging.info(f"You may have been double spent with the following transactions: {old_utxos}")
+                # if utxo[5] in  remove_block_hashes:
+                if int(utxo[7]) > fork_block_height:
+                    tx_set_flag(user, utxo[0], TXOState.UNCONFIRMED_UTXO.value, utxo[1], 0, "0")
