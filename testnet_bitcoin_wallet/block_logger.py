@@ -2,7 +2,7 @@ import time
 import signal
 import logging
 
-from ProgrammingBitcoin.bloomfilter import BloomFilter 
+from ProgrammingBitcoin.bloomfilter import BloomFilter
 from ProgrammingBitcoin.helper import decode_base58
 from ProgrammingBitcoin.merkleblock import MerkleBlock
 from ProgrammingBitcoin.network import (
@@ -14,7 +14,7 @@ from ProgrammingBitcoin.network import (
 )
 from ProgrammingBitcoin.tx import Tx
 
-from block_utils import * 
+from block_utils import *
 
 HOST = get_node()
 

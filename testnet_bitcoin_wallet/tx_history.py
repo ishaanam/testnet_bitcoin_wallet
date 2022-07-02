@@ -15,7 +15,7 @@ def get_tx_history(username, online, show_unconfirmed=False):
         block_hash = tx[-2]
         if online:
             if synched:
-                confirmations = latest_height - get_height("block_log.csv", block_hash) + 1
+                confirmations = latest_height - get_height(block_hash) + 1
             else:
                 confirmations = "unknown (synchronizing)"
         else:

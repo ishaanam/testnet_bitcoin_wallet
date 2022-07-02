@@ -20,7 +20,7 @@ def get_birthday():
     # storing the wallet birthday in this manner will work for around 5.6 years before we run out of words
     start_block = 2164464
     block = read_log(-1)
-    h = get_height('block_log.csv', block)
+    h = get_height(block)
     h -= start_block
     n = math.floor(h/144) 
     with open("english.txt", "r") as words:

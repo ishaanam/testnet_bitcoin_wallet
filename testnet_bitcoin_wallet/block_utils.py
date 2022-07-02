@@ -50,7 +50,7 @@ logging.basicConfig(filename='block.log', format='%(levelname)s:%(message)s', le
 # If block_log.csv file doesn't exist, this function will create one
 def start_log():
     start_block = "000000000000012ad603ddcc526791f6b2046a887999a284d60c44599536fced"
-    start_height =  2164464 
+    start_height =  2164464
     next_block = "0000000000006421447d155fc4007170cab0d98a06448dbaf74435be86082a8e"
     next_height =2164465
     with open("block_log.csv", "w", newline="") as block_log:
@@ -82,7 +82,7 @@ def get_latest_block_hash():
     node.send(getheaders)
 
     headers = node.wait_for(HeadersMessage)
-    
+
     try:
         return headers.blocks[-1].hash().hex()
     except IndexError:
@@ -100,14 +100,6 @@ def get_known_hash():
         blocks = list(r)
     return blocks[-1][0]
 
-def get_hash_from_height(height):
-    with open("block_log.csv", "r") as blocks:
-        r = csv.reader(blocks)
-        blocks = list(r)
-        for block in blocks:
-            if int(block[1]) == height:
-                return block[0]
-
 # checks if latest block hash from node is the same as the most recent one in block_log.csv
 def is_synched():
     now_hash = get_latest_block_hash()
@@ -116,46 +108,15 @@ def is_synched():
         return True
     return False
 
-# check if the address gap limit has been exceeded
-def gap_exceeded(username):
-    with open(f"{username}.csv", "r") as address_file:
-        r = csv.reader(address_file)
-        addresses = []
-        for address in list(r):
-            addresses.append(address[1])
-    total = len(addresses)
-    with open(f"{username}_utxos.csv", "r") as utxo_file:
-        r = csv.reader(utxo_file)
-        used = []
-        for utxo in list(r):
-            used.append(utxo[3])
-    if used == [] and total > 20:
-        return True, addresses[0]
-    if used:
-        latest = addresses.index(used[-1])
-        if (total - latest > 20):
-            for addr in used:
-                addresses.remove(addr)
-            oldest_unused_addr = addresses[0]
-            return True, oldest_unused_addr 
-        return False, []
-    return False, [] 
-
 # get the height of a block given the file and a block hash
-def get_height(file, block_hash):
-    with open(file, "r") as block_file:
+def get_height(block_hash):
+    with open("block_log.csv", "r") as block_file:
         r = csv.reader(block_file)
         blocks = list(r)
     for block in blocks:
         if block[0] == block_hash:
             return int(block[1])
     return 0
-
-def read_fork_log(file, n):
-    with open(file, "r") as block_file:
-        r = csv.reader(block_file)
-        blocks = list(r)
-        return blocks[n][0]
 
 # find which user an address belongs to
 def find_user(addr):
@@ -207,99 +168,11 @@ def get_block_hex(m):
     block = Block(m.version, m.prev_block, m.merkle_root, m.timestamp, m.bits, m.nonce)
     return block.hash().hex()
 
-def prev_fork_hash(file):
-    with open(file, "r") as fork:
-        r = csv.reader(fork)
-        hashes = list(r)
-        return hashes[-1][0]
-
-# get a list of all fork files
-def get_forks():
-    forks = []
-    counter = 0
-    while True:
-        if exists(f"fork_{counter}.csv"):
-           forks.append(f"fork_{counter}.csv")
-           counter += 1
-        else:
-            return forks
-
-# make a fork file given the block in common with the main chain and the forked block(s)
-def make_fork_file(prev_block, fork_blocks):
-    forks = get_forks()
-    num = len(forks) 
-    height = get_height("block_log.csv", prev_block)
-    lines = []
-    lines.append([prev_block, height])
-    
-    for block in fork_blocks:
-        height += 1
-        lines.append([block, height])
-
-    with open(f"fork_{num}.csv", "w", newline="") as fork_file:
-        w = csv.writer(fork_file)
-        w.writerows(lines)
-
-    return f"fork_{num}.csv"
-
-def write_block(prev_block, block_hash):
-    # if block builds on top of the main chain
-    if read_log(-1) == prev_block:
-        height = get_height('block_log.csv', prev_block) + 1
-        with open("block_log.csv", "a", newline="") as block_file:
-            w = csv.writer(block_file)
-            w.writerow((block_hash, height))
-        return None
-    # look for existing fork file with that prev_block
-    else:
-        forks = get_forks()
-        for fork in forks:
-            if read_fork_log(fork, -1) == prev_block:
-                height = get_height(fork, prev_block) + 1
-                with open(fork, "a", newline="") as block_file:
-                    w = csv.writer(block_file)
-                    w.writerow((block_hash, height))
-                return None
-    # if new fork
-    make_fork_file(prev_block, [block_hash])
-
-# obtains all block hashed in main file (block_log.csv) and all fork files
-def all_hashes():
-    with open("block_log.csv", "r") as block_file:
-        r = csv.reader(block_file)
-        lines = list(r)
-        blocks = []
-        for line in lines:
-            blocks.append(line[0])
-    forks = get_forks()
-    for fork in forks:
-        with open(fork, "r") as block_file:
-            r = csv.reader(block_file)
-            lines = list(r)
-            for line in lines:
-                blocks.append(line[0])
-    return blocks
-
-def all_main_blocks():
-    with open('block_log.csv', 'r') as block_file:
-        r = csv.reader(block_file)
-        blocks = list(r)
-    return blocks
-
-def need_reorg():
-    main_height = get_height("block_log.csv", read_log(-1)) 
-    old_forks = get_forks()
-    highest = main_height
-    forks = {}
-    for fork in old_forks:
-        block = read_fork_log(fork, -1)
-        h = get_height(fork, block)
-        forks[h] = fork 
-        if h > highest:
-            highest = h
-    if forks != {}:
-        if highest > main_height:
-            return forks[highest]
+def write_block(prev_block, block_hash, num_blocks):
+    height = get_known_height() + num_blocks
+    with open("block_log.csv", "a", newline="") as block_file:
+        w = csv.writer(block_file)
+        w.writerow((block_hash, height))
     return None
 
 # gets all transaction ids
