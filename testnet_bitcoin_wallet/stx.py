@@ -24,9 +24,9 @@ def get_balance(username, unconfirmed=False):
         r = csv.reader(user_file)
         lines = list(r)
         for line in lines:
-            if line[-1] == "0":
+            if line[6] == "0":
                 unconfirmed_amount += int(line[2])
-            elif line[-1] == "1":
+            elif line[6] == "1":
                 amount += int(line[2])
     if unconfirmed:
         return amount, unconfirmed_amount
@@ -45,7 +45,7 @@ def get_all_utxos(username):
         utxos = list(r)
     output = []
     for i, utxo in enumerate(utxos):
-        if utxo[-1] == "1":
+        if utxo[6] == "1":
             output.append(utxo)
     return output 
 
@@ -146,4 +146,4 @@ def broadcast_transaction(tx_obj, online, self_broadcast, needs_change, username
             change_amount = change_out.amount
             change_script = change_out.script_pubkey
             change_address = change_script.address(testnet=True)
-            tx_set_new(username, tx_obj.id(), change_index, change_amount, change_address, change_script, "0")
+            tx_set_new(username, tx_obj.id(), change_index, change_amount, change_address, change_script, "0", 0)

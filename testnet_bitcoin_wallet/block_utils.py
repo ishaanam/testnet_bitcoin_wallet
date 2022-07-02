@@ -188,13 +188,13 @@ def get_all_ids():
     return ids
 
 # set tx flag to 0
-def tx_set_new(user, tx_id, index, amount, address, scriptPubKey, block_hash):
+def tx_set_new(user, tx_id, index, amount, address, scriptPubKey, block_hash, height):
     with open(f"{user}_utxos.csv", 'a', newline="") as utxo_file:
         w = csv.writer(utxo_file)
-        w.writerow([tx_id, index, amount, address, scriptPubKey, block_hash, TXOState.UNCONFIRMED_UTXO.value])
+        w.writerow([tx_id, index, amount, address, scriptPubKey, block_hash, TXOState.UNCONFIRMED_UTXO.value, height])
 
 # set tx flag to 1
-def tx_set_confirmed(user, tx_id, index=None, amount=None, address=None, scriptPubKey=None, block_hash=None):
+def tx_set_confirmed(user, tx_id, index=None, amount=None, address=None, scriptPubKey=None, block_hash=None, height=None):
     with open(f"{user}_utxos.csv", 'r') as utxo_file:
         r = csv.reader(utxo_file)
         utxos = list(r)
@@ -205,16 +205,18 @@ def tx_set_confirmed(user, tx_id, index=None, amount=None, address=None, scriptP
     if existing_index != None:
         utxos[existing_index][6] = TXOState.CONFIRMED_UTXO.value
         utxos[existing_index][5] = block_hash
+        utxos[existing_index][7] = height
     elif existing_index == None and address:
-        utxos.append([tx_id, index, amount, address, scriptPubKey, block_hash, TXOState.CONFIRMED_UTXO.value])
+        utxos.append([tx_id, index, amount, address, scriptPubKey, block_hash, TXOState.CONFIRMED_UTXO.value, height])
     else:
         raise UTXONotFoundError("Unable to find unconfirmed utxo to set as confirmed")
     with open(f"{user}_utxos.csv", 'w', newline="") as utxo_file:
         w = csv.writer(utxo_file)
         w.writerows(utxos)
 
-# set other flags(2, 3, sometimes 0) 
-def tx_set_flag(user, tx_id, flag, index=None):
+# set other flags(2, 3, sometimes 0)
+def tx_set_flag(user, tx_id, flag, index=None, block_height=None, block_hash=None):
+    existing_index = None
     with open(f"{user}_utxos.csv", 'r') as utxo_file:
         r = csv.reader(utxo_file)
         utxos = list(r)
@@ -223,7 +225,16 @@ def tx_set_flag(user, tx_id, flag, index=None):
                 existing_index = i
             elif utxo[0] == tx_id and index == None:
                 existing_index = i
-    utxos[existing_index][-1] = int(flag)
+    if existing_index == None:
+        raise UTXONotFoundError("Unable to find transction to set flag")
+
+    if flag:
+        utxos[existing_index][6] = int(flag)
+    if block_height:
+        utxos[existing_index][7] = block_height
+    if block_hash:
+        utxos[existing_index][5] = block_hash
+
     with open(f"{user}_utxos.csv", 'w') as utxo_file:
         w = csv.writer(utxo_file)
         w.writerows(utxos)

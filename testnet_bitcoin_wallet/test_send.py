@@ -32,10 +32,10 @@ def add_key(username, key, address):
         w.writerow((key, address))
 
 
-def add_utxo(username, txid, index, amount, address, script, block_hash, txo_state):
+def add_utxo(username, txid, index, amount, address, script, block_hash, txo_state, height=0):
     with open(f"{username}_utxos.csv", 'a', newline="") as user_file:
         w = csv.writer(user_file)
-        w.writerow((txid, index, amount, address, script, block_hash, txo_state))
+        w.writerow((txid, index, amount, address, script, block_hash, txo_state, height))
 
 
 class TestWallet(unittest.TestCase):

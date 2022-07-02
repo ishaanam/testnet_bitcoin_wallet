@@ -20,11 +20,11 @@ def get_tx_history(username, online, show_unconfirmed=False):
                 confirmations = "unknown (synchronizing)"
         else:
             confirmations = "unknown (offline)"
-        if tx[-1] == '0': 
+        if tx[6] == '0':
             status = "unconfirmed" 
-        elif tx[-1] == '1':
+        elif tx[6] == '1':
             status = "unspent"
-        elif tx[-1] == '2' or tx[-1] == '3':
+        elif tx[6] == '2' or tx[6] == '3':
             status = "spent"
         
         if status == "unconfirmed transaction":
